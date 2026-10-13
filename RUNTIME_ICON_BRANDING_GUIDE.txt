@@ -1,0 +1,313 @@
+CYNDAQUIL RUNTIME ICON AND BRANDING GUIDE
+=========================================
+
+PURPOSE
+-------
+This file documents the exact branding approach used by Cyndaquil so the same
+approach can be copied into another Python / PySide6 application.
+
+The important rule is:
+
+    The custom icon is a RUNTIME APPLICATION icon only.
+
+Cyndaquil does NOT:
+- create .ico files for Windows Explorer
+- modify the .pyw file association
+- modify folder icons
+- create desktop.ini
+- create shortcuts for branding
+- use Windows shell icon-cache tricks
+
+This avoids the blurry or inconsistent Explorer/taskbar behavior that can
+happen when an application mixes runtime QIcon branding with Windows .ico and
+file-association branding.
+
+
+1. HIDDEN APPLICATION DATA DIRECTORY
+------------------------------------
+At startup Cyndaquil creates this hidden directory beside the project files:
+
+    .cyndaquil\
+
+On Windows the code attempts to apply the Hidden attribute to this directory.
+The folder contains application-owned state and generated assets.
+
+Expected runtime structure:
+
+    .cyndaquil\
+        state.json
+        resources.json
+        sessions.json
+
+        generated\
+            fallback_icon.png
+            fallback_visual.png
+            fallback_audio.wav
+
+        branding\                 <- only created when needed
+            custom_icon.png       <- extension follows selected source
+
+        defaults\                 <- only created when needed
+            custom_audio.*
+            custom_visual.*
+
+The generated folder is application-owned. The user does not have to maintain
+it manually.
+
+
+2. FALLBACK ICON GENERATION
+---------------------------
+Cyndaquil generates its fallback icon as a normal transparent PNG with Qt:
+
+    QImage(256, 256, QImage.Format_ARGB32)
+    QPainter(image)
+    ...draw the emblem...
+    image.save("fallback_icon.png", "PNG")
+
+The generated file is stored at:
+
+    .cyndaquil\generated\fallback_icon.png
+
+It is generated only when missing.
+
+No ICO conversion is performed.
+
+Why PNG:
+- Qt can load it directly into QIcon
+- the full-resolution source remains available to the taskbar and UI
+- there is no separate low-resolution .ico generation step that can introduce
+  blur
+- one source image is used consistently everywhere
+
+For another application, prefer a square 512x512 transparent PNG with a clean
+high-resolution logo and some transparent margin around the artwork. 256x256 is
+also acceptable. Avoid starting from a tiny image and scaling it up; that is a
+common reason a taskbar icon looks blurred.
+
+
+3. WHEN THE USER SELECTS A CUSTOM LOGO
+--------------------------------------
+The Settings page accepts a normal image such as:
+
+    PNG
+    JPG / JPEG
+    BMP
+    WebP
+
+For taskbar branding, PNG is strongly preferred. A square 512x512 PNG usually
+gives Qt and Windows the cleanest source to downscale.
+
+The selected source file is NOT referenced permanently from Downloads or some
+other arbitrary location.
+
+Instead the application copies it into its own branding directory:
+
+    .cyndaquil\branding\custom_icon.<original extension>
+
+Before copying a new logo, old files matching:
+
+    custom_icon.*
+
+are deleted from the branding directory.
+
+The copied path is written to state.json as:
+
+    custom_icon_path
+
+This means deleting the original downloaded image does not break the app icon.
+
+
+4. ICON RESOLUTION LOGIC
+------------------------
+Cyndaquil effectively resolves the current icon like this:
+
+    if custom_icon_path exists:
+        use custom icon
+    else:
+        use .cyndaquil/generated/fallback_icon.png
+
+If a saved custom file is missing, Cyndaquil automatically falls back to the
+generated PNG. It does not leave a broken icon reference.
+
+
+5. WINDOWS TASKBAR IDENTITY
+---------------------------
+Before QApplication is created, Cyndaquil sets a stable Windows application
+identity:
+
+    import ctypes
+
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        "Cyndaquil.Productivity"
+    )
+
+For another app, use its own stable unique string, for example:
+
+    "MyApp.Productivity"
+
+Do this BEFORE creating QApplication.
+
+This helps Windows identify the Python process as the application rather than
+only as pythonw.exe.
+
+
+6. APPLY THE SAME QICON EVERYWHERE
+---------------------------------
+Load the resolved PNG directly:
+
+    icon = QIcon(str(current_icon_path))
+
+Apply it to QApplication:
+
+    app.setWindowIcon(icon)
+
+Apply it to the main window:
+
+    main_window.setWindowIcon(icon)
+
+Apply it to the system tray:
+
+    tray.setIcon(icon)
+
+For an in-app sidebar/header emblem, load the SAME image with QPixmap:
+
+    pixmap = QPixmap(str(current_icon_path))
+    logo_label.setPixmap(
+        pixmap.scaled(
+            logo_label.size(),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        )
+    )
+
+Important:
+The sidebar QLabel must already exist before trying to set its pixmap. If the
+main window applies the icon earlier in __init__, call the branding refresh
+again immediately after creating the sidebar logo widget.
+
+
+7. UPDATE THE ICON WITHOUT RESTARTING
+-------------------------------------
+When Settings copies a new custom logo, Cyndaquil emits a branding_changed
+signal.
+
+The main window listens for that signal and reapplies:
+
+- QApplication icon
+- MainWindow icon
+- System tray icon
+- sidebar QPixmap
+
+So choosing a new logo updates the running application immediately.
+
+
+8. WHAT NOT TO DO FOR THIS USE CASE
+-----------------------------------
+If the goal is only:
+
+- app window icon
+- Windows taskbar icon
+- system tray icon
+- in-app logo
+
+then do NOT add:
+
+- app_icon.ico
+- folder_icon_*.ico
+- desktop.ini
+- registry changes for .pyw
+- shortcut icon customization
+- Explorer icon-cache scripts
+
+Those solve a different Windows-shell problem and can make this runtime
+branding system more fragile or blurry.
+
+
+9. EXPECTED CLEAN CYNDAQUIL PROJECT DIRECTORY
+---------------------------------------------
+Before first launch:
+
+    Cyndaquil\
+        Cyndaquil.pyw
+        Install Cyndaquil.bat
+        README.txt
+        RUNTIME_ICON_BRANDING_GUIDE.txt
+        requirements.txt
+
+        project\
+            __init__.py
+            bootstrap.py
+            companion.py
+            history.py
+            home.py
+            library.py
+            main.py
+            media.py
+            presets.py
+            session.py
+            settings.py
+            store.py
+            theme.py
+            utils.py
+
+        resources\
+            (empty initially; user Resource Library files go here)
+
+After running the application, this is also expected:
+
+        .cyndaquil\
+            state.json
+            resources.json
+            sessions.json
+            generated\
+                fallback_icon.png
+                fallback_visual.png
+                fallback_audio.wav
+
+Optional directories appear only after the related feature is used:
+
+            branding\
+                custom_icon.*
+
+            defaults\
+                custom_audio.*
+                custom_visual.*
+
+The resources directory may also later contain:
+
+        resources\
+            library\
+            backups\
+            your images / GIFs / videos / audio files
+
+
+10. OLD CYNDAQUIL LEFTOVERS THAT ARE NOT USED ANYMORE
+-----------------------------------------------------
+If they came from the older Cyndaquil builds discussed before this guide, the
+following are no longer part of the current design:
+
+    Cyndaquil.lnk
+    Cyndaquil Setup.pyw
+    desktop.ini               <- old Cyndaquil folder-icon experiment
+    resources\app_icon.ico
+    resources\app_icon.png    <- old Explorer/icon experiment
+    resources\folder_icon_*.ico
+
+The current Cyndaquil code does not create or read those files.
+
+Do not delete an unrelated desktop.ini from some other folder merely because
+of this guide. This note refers specifically to the old Cyndaquil project
+folder customization files.
+
+
+SUMMARY FOR ANOTHER PROJECT
+---------------------------
+Use one high-resolution PNG source.
+Keep generated fallback branding in a hidden app-data folder.
+Copy user-selected branding into a hidden branding subfolder.
+Store the copied path in settings.
+Set a Windows AppUserModelID before QApplication.
+Apply the same QIcon to QApplication, main window, and tray.
+Apply the same source as a scaled QPixmap inside the UI.
+Reapply all of them when branding changes.
+Do not involve .ico or Windows Explorer if Explorer branding is not required.

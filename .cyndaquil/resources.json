@@ -1,0 +1,69 @@
+[
+  {
+    "id": "system_default_visual",
+    "name": "Default Ember Visual",
+    "filename": "fallback_visual.png",
+    "kind": "image",
+    "primary_path": ".cyndaquil\\generated\\fallback_visual.png",
+    "backup_path": null,
+    "managed": true,
+    "auto_internal": false,
+    "special": true,
+    "system_default": true,
+    "added_at": "2026-10-07T01:29:57+05:30",
+    "size": 27153
+  },
+  {
+    "id": "system_default_audio",
+    "name": "Default Ember Ambience",
+    "filename": "fallback_audio.wav",
+    "kind": "audio",
+    "primary_path": ".cyndaquil\\generated\\fallback_audio.wav",
+    "backup_path": null,
+    "managed": true,
+    "auto_internal": false,
+    "special": true,
+    "system_default": true,
+    "added_at": "2026-10-07T01:29:57+05:30",
+    "size": 793844
+  },
+  {
+    "id": "5577458ac8854d25aabe1afbbfc7adec",
+    "name": "Marches",
+    "filename": "Marches.mp3",
+    "kind": "audio",
+    "primary_path": "resources\\Marches.mp3",
+    "backup_path": null,
+    "managed": true,
+    "auto_internal": true,
+    "special": false,
+    "added_at": "2026-10-07T01:29:57+05:30",
+    "size": 96199551
+  },
+  {
+    "id": "b813d60f9c5c4b3480a3f85f58455ad1",
+    "name": "Marches",
+    "filename": "Marches.png",
+    "kind": "image",
+    "primary_path": "resources\\Marches.png",
+    "backup_path": null,
+    "managed": true,
+    "auto_internal": true,
+    "special": false,
+    "added_at": "2026-10-07T01:29:57+05:30",
+    "size": 2392512
+  },
+  {
+    "id": "0fe6ac6cd214434bb51c4a89a585cfaa",
+    "name": "C Porn Solo Breast Slaps",
+    "filename": "C Porn Solo Breast Slaps.mp4",
+    "kind": "video",
+    "primary_path": "resources\\C Porn Solo Breast Slaps.mp4",
+    "backup_path": null,
+    "managed": true,
+    "auto_internal": true,
+    "special": false,
+    "added_at": "2026-10-09T03:00:00+05:30",
+    "size": 205327986
+  }
+]
