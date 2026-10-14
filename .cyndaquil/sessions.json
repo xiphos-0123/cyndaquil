@@ -3,41 +3,41 @@
     "id": "4b638f19774a4b3c81d83636664a7259",
     "started_at": "2026-10-07T02:11:48+05:30",
     "ended_at": "2026-10-07T04:34:02+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 1",
+    "mission": "Johto = Part 1",
     "preset_id": "fdf194ee1b3444a7bb1fb76e51004750",
     "preset_name": "Marches",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 7516,
     "distractions": [],
-    "completion_note": "Totodile/Togepi = App Progression + Reaching Final Draft\nTogepi = Checking Initial Data\n\nProductivity = High for Returning to Work + Low for Time Spent",
+    "completion_note": "Totodile + Togepi = Developing App\nTogepi = Checking Data\n\nProductivity = 1/3",
     "music_ids": [
       "5577458ac8854d25aabe1afbbfc7adec"
     ],
     "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1",
-    "edited_at": "2026-10-09T18:36:47+05:30"
+    "edited_at": "2026-10-14T19:38:00+05:30"
   },
   {
     "id": "9acdbba702d1424fa02021379914db2c",
     "started_at": "2026-10-07T17:55:50+05:30",
     "ended_at": "2026-10-07T20:23:20+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 2",
+    "mission": "Johto = Part 2",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 6094,
     "distractions": [],
-    "completion_note": "Totodile = App Progression + Codex\nTogepi = Checking Initial Data\n\nProductivity = Decent for Returning to Work + Low for Time Spent",
+    "completion_note": "Totodile = Developing App = Learning Codex\nTogepi = Checking Data\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-09T18:38:57+05:30"
+    "edited_at": "2026-10-14T19:39:00+05:30"
   },
   {
     "id": "2bb1c85d837341749c4c9cc9e71fea43",
     "started_at": "2026-10-07T20:52:23+05:30",
     "ended_at": "2026-10-08T01:50:40+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 3",
+    "mission": "Johto = Part 3",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
@@ -47,13 +47,13 @@
     "completion_note": "Togepi = Developing Initial Data\n\nProductivity = Low for Time Spent",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-09T18:36:58+05:30"
+    "edited_at": "2026-10-14T19:31:30+05:30"
   },
   {
     "id": "01b1cf3c1bb84c2288b6aad5fa8227ed",
     "started_at": "2026-10-08T04:36:38+05:30",
     "ended_at": "2026-10-08T08:37:35+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 4",
+    "mission": "Johto = Part 4",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
@@ -62,132 +62,132 @@
     "distractions": [
       "Urge to Play Gota = No Joy + No Skill + No Hope + Useless"
     ],
-    "completion_note": "Togepi = Developing Initial Data (Avatars)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Avatars\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-09T18:37:11+05:30"
+    "edited_at": "2026-10-14T19:39:18+05:30"
   },
   {
     "id": "28a3039da09d4111b18ca738f26de05c",
     "started_at": "2026-10-08T18:27:16+05:30",
     "ended_at": "2026-10-08T21:16:05+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 5",
+    "mission": "Johto = Part 5",
     "preset_id": "fdf194ee1b3444a7bb1fb76e51004750",
     "preset_name": "Marches",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 3320,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Hearth)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Hearths\n\nProductivity = 1/3",
     "music_ids": [
       "5577458ac8854d25aabe1afbbfc7adec"
     ],
     "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1",
-    "edited_at": "2026-10-09T18:37:17+05:30"
+    "edited_at": "2026-10-14T19:39:37+05:30"
   },
   {
     "id": "d4c78569014141548856c0e06bb0cd86",
     "started_at": "2026-10-08T21:17:25+05:30",
     "ended_at": "2026-10-09T01:17:25+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 6",
+    "mission": "Johto = Part 6",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 8258,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Fixes)\nTotodile = App Progression + Codex\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Fixes\nTotodile = Developing App\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-09T18:38:50+05:30"
+    "edited_at": "2026-10-14T19:40:06+05:30"
   },
   {
     "id": "c23987b8fde2476e83bf4c108e6421aa",
     "started_at": "2026-10-09T03:00:30+05:30",
     "ended_at": "2026-10-09T06:58:55+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 7",
+    "mission": "Johto = Part 7",
     "preset_id": "5eceb1067d3b4bcf9a23ce95147584f3",
     "preset_name": "C0",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 8943,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Extra Models & Markers)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Extra Models + Markers\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": "0fe6ac6cd214434bb51c4a89a585cfaa",
-    "edited_at": "2026-10-09T18:37:26+05:30"
+    "edited_at": "2026-10-14T19:46:24+05:30"
   },
   {
     "id": "b716a9731766426ebbba77f7684606ff",
     "started_at": "2026-10-09T16:55:11+05:30",
     "ended_at": "2026-10-09T18:35:48+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 8",
+    "mission": "Johto = Part 8",
     "preset_id": "fdf194ee1b3444a7bb1fb76e51004750",
     "preset_name": "Marches",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 3260,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Checking)\nCyndaquil = App Progression\n\nProductivity = Decent for Time Spent",
+    "completion_note": "Togepi = Checking Data\nCyndaquil = Developing App\n\nProductivity = 2/3",
     "music_ids": [
       "5577458ac8854d25aabe1afbbfc7adec"
     ],
     "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1",
-    "edited_at": "2026-10-10T01:26:45+05:30"
+    "edited_at": "2026-10-14T19:46:48+05:30"
   },
   {
     "id": "7b54096233d744d3b64393cffd691314",
     "started_at": "2026-10-09T21:01:59+05:30",
     "ended_at": "2026-10-10T01:26:26+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 9",
+    "mission": "Johto = Part 9",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 12799,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Fixing)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Fixes\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-10T07:44:57+05:30"
+    "edited_at": "2026-10-14T19:47:13+05:30"
   },
   {
     "id": "a8873ae7b50c4f25baca14dd96254ca9",
     "started_at": "2026-10-10T04:15:02+05:30",
     "ended_at": "2026-10-10T05:54:56+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 10",
+    "mission": "Johto = Part 10",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 3486,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Fixing)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Fixes\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-10T07:45:01+05:30"
+    "edited_at": "2026-10-14T19:47:33+05:30"
   },
   {
     "id": "79628d89e7af4f7eb543ce3023ef2f2d",
     "started_at": "2026-10-10T06:01:29+05:30",
     "ended_at": "2026-10-10T09:06:25+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 11",
+    "mission": "Johto = Part 11",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 7275,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Finishing)\n\nProductivity = Decent for Time Spent",
+    "completion_note": "Togepi = Developing Data = Polishing\n\nProductivity = 2/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-10T09:25:40+05:30"
+    "edited_at": "2026-10-14T19:47:45+05:30"
   },
   {
     "id": "1e207956f4984ff0a2d5b1403efa8654",
     "started_at": "2026-10-10T18:47:17+05:30",
     "ended_at": "2026-10-10T19:51:37+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 12",
+    "mission": "Johto = Part 12",
     "preset_id": "fdf194ee1b3444a7bb1fb76e51004750",
     "preset_name": "Marches",
     "mode": "stopwatch",
@@ -197,28 +197,28 @@
       "Togepi = Developing Initial Data (Finishing)",
       "Productivity = Decent for Time Spent"
     ],
-    "completion_note": "Togepi = Developing Initial Data (Finishing)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Polishing\n\nProductivity = 1/3",
     "music_ids": [
       "5577458ac8854d25aabe1afbbfc7adec"
     ],
     "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1",
-    "edited_at": "2026-10-10T23:55:58+05:30"
+    "edited_at": "2026-10-14T19:48:05+05:30"
   },
   {
     "id": "523d03265b9e4b608341f928fe7adbf0",
     "started_at": "2026-10-10T22:59:07+05:30",
     "ended_at": "2026-10-10T23:55:11+05:30",
-    "mission": "Johto = App/Data = 2nd Milestone Development = Part 13",
+    "mission": "Johto = Part 13",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 2703,
     "distractions": [],
-    "completion_note": "Togepi = Developing Initial Data (Finishing)\n\nProductivity = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Finishing\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-10T23:56:02+05:30"
+    "edited_at": "2026-10-14T19:49:36+05:30"
   },
   {
     "id": "f817f0013ef44144b252c93207c8c00e",
@@ -231,10 +231,10 @@
     "target_seconds": 0,
     "focused_seconds": 15199,
     "distractions": [],
-    "completion_note": "Togepi = Developing Bonds + Other Checks = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Bonds + Checking\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-11T22:37:57+05:30"
+    "edited_at": "2026-10-14T19:50:45+05:30"
   },
   {
     "id": "252c43f0f60c495ebf72e5a36dad5007",
@@ -247,10 +247,10 @@
     "target_seconds": 0,
     "focused_seconds": 3058,
     "distractions": [],
-    "completion_note": "Togepi = Developing Bonds + Other Checks = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Bonds\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-11T22:38:16+05:30"
+    "edited_at": "2026-10-14T19:50:58+05:30"
   },
   {
     "id": "7968f2c698eb4d59bafd3d47980c3b0c",
@@ -263,10 +263,10 @@
     "target_seconds": 0,
     "focused_seconds": 10201,
     "distractions": [],
-    "completion_note": "Togepi = Developing Bonds + Other Checks = Low for Time Spent",
+    "completion_note": "Togepi = Developing Data = Bonds + Checking\n\nProductivity = 1/3",
     "music_ids": [],
     "visual_id": null,
-    "edited_at": "2026-10-12T23:22:44+05:30"
+    "edited_at": "2026-10-14T19:51:19+05:30"
   },
   {
     "id": "ca1ba7034b07478987cdde9588a195ec",
@@ -279,43 +279,45 @@
     "target_seconds": 0,
     "focused_seconds": 7253,
     "distractions": [],
-    "completion_note": "Difficult Beginning + Recorded",
+    "completion_note": "Recording Main Realm\nDifficult Beginning",
     "music_ids": [
       "system_default_audio"
     ],
     "visual_id": "system_default_visual",
-    "edited_at": "2026-10-13T22:17:28+05:30"
+    "edited_at": "2026-10-14T19:52:25+05:30"
   },
   {
     "id": "01120335891b49c288e78137b1f438aa",
     "started_at": "2026-10-13T22:15:42+05:30",
     "ended_at": "2026-10-13T23:25:04+05:30",
-    "mission": "",
+    "mission": "Hoenn = Part 1",
     "preset_id": "fdf194ee1b3444a7bb1fb76e51004750",
     "preset_name": "Marches",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 4162,
     "distractions": [],
-    "completion_note": "",
+    "completion_note": "Mudkip = Developing App\nPlanning Progression\n\nProductivity = 1/3",
     "music_ids": [
       "5577458ac8854d25aabe1afbbfc7adec"
     ],
-    "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1"
+    "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1",
+    "edited_at": "2026-10-14T19:55:12+05:30"
   },
   {
     "id": "d48220e76b404170825f860eb8699495",
     "started_at": "2026-10-14T03:57:11+05:30",
     "ended_at": "2026-10-14T04:47:09+05:30",
-    "mission": "",
+    "mission": "Hoenn = Part 2",
     "preset_id": "f3d235013edf414bb50ff9b7880456a0",
     "preset_name": "Empty",
     "mode": "stopwatch",
     "target_seconds": 0,
     "focused_seconds": 2203,
     "distractions": [],
-    "completion_note": "",
+    "completion_note": "Planning Progression",
     "music_ids": [],
-    "visual_id": null
+    "visual_id": null,
+    "edited_at": "2026-10-14T19:55:17+05:30"
   }
 ]

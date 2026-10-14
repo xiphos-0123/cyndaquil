@@ -1,0 +1,74 @@
+{
+  "settings": {
+    "font_family": "Segoe UI",
+    "font_size": 10,
+    "ritual_seconds": 0,
+    "audio_volume": 100,
+    "idle_enabled": true,
+    "idle_minutes": 2,
+    "history_day_start_hour": 0,
+    "history_chart_days": 14,
+    "visual_framing_profiles": {},
+    "custom_icon_path": ".cyndaquil\\branding\\custom_icon.png",
+    "default_audio_path": null,
+    "default_visual_path": null,
+    "visual_companion_enabled": true,
+    "visual_companion_width": 558,
+    "visual_companion_height": 314,
+    "visual_companion_lock_aspect": true,
+    "visual_companion_opacity": 96,
+    "control_companion_enabled": true,
+    "control_companion_width": 150,
+    "control_companion_opacity": 96,
+    "control_companion_clock_size": 20,
+    "control_companion_button_size": 10,
+    "control_companion_button_height": 20,
+    "control_companion_padding": 8,
+    "control_companion_spacing": 4,
+    "control_companion_show_timer": true,
+    "control_companion_show_status": false,
+    "control_companion_show_pause": true,
+    "control_companion_show_adjust": true,
+    "control_companion_show_main": true,
+    "control_companion_show_finish": false,
+    "control_companion_show_customize": true
+  },
+  "presets": [
+    {
+      "id": "default",
+      "name": "Default",
+      "mode": "stopwatch",
+      "minutes": 50,
+      "music_ids": [
+        "system_default_audio"
+      ],
+      "visual_id": "system_default_visual"
+    },
+    {
+      "id": "fdf194ee1b3444a7bb1fb76e51004750",
+      "name": "Marches",
+      "mode": "stopwatch",
+      "minutes": 50,
+      "music_ids": [
+        "5577458ac8854d25aabe1afbbfc7adec"
+      ],
+      "visual_id": "b813d60f9c5c4b3480a3f85f58455ad1"
+    },
+    {
+      "id": "f3d235013edf414bb50ff9b7880456a0",
+      "name": "Empty",
+      "mode": "stopwatch",
+      "minutes": 50,
+      "music_ids": [],
+      "visual_id": null
+    },
+    {
+      "id": "5eceb1067d3b4bcf9a23ce95147584f3",
+      "name": "C0",
+      "mode": "stopwatch",
+      "minutes": 50,
+      "music_ids": [],
+      "visual_id": "0fe6ac6cd214434bb51c4a89a585cfaa"
+    }
+  ]
+}

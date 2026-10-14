@@ -1,4 +1,5 @@
-I should be able to write some note like how I can write distraction dump... when I save it as history they will come in finishing history notes only and I will polish it
+When I'm viewing Distraction Dump should be viewable bubt you byb default you can keep it collapsed or hidden as it's pretty useless
 
-I want more stats for the work... like according to time only
-right now it's good but I want more
+I want a selector in history where I can filter for specific time or else I already have like 19 sessions it efels difficult to traverse through it especially if the window is so so small History should have two sub window stats and session history which should be bigger... the completion note should not be merged in 1 line it looks weird... and if I want to see only the last week or month etc I should be allowed but If I do want all and scroll a lot that should be viable too
+
+I also want to put custom tags on session like I can add "Waking Up Arc" and put all my beginning sessions in that and then when I am filtering I can remove them or add them just giving an example
