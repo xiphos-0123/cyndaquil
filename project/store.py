@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import shutil
 from copy import deepcopy
 from pathlib import Path
@@ -15,6 +14,7 @@ from .bootstrap import (
     hide_folder_windows,
     replace_managed_asset,
 )
+from .persistence import read_json, write_json
 from .utils import detect_kind, new_id, now_iso, relative_or_absolute, resolve_stored_path
 
 
@@ -200,23 +200,8 @@ class Store(QObject):
 
     # ---------- persistence ----------
 
-    @staticmethod
-    def _read(path: Path, fallback):
-        try:
-            if path.exists():
-                with path.open("r", encoding="utf-8") as handle:
-                    return json.load(handle)
-        except Exception:
-            pass
-        return deepcopy(fallback)
-
-    @staticmethod
-    def _write(path: Path, data) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        temp = path.with_suffix(path.suffix + ".tmp")
-        with temp.open("w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, ensure_ascii=False)
-        temp.replace(path)
+    _read = staticmethod(read_json)
+    _write = staticmethod(write_json)
 
     def save_state(self) -> None:
         self._write(self.state_path, {"settings": self.settings, "presets": self.presets})
@@ -810,8 +795,9 @@ class Store(QObject):
     def add_session(self, session: dict[str, Any]) -> None:
         session = dict(session)
         session.pop("break_seconds", None)
-        self.sessions.append(session)
-        self.save_sessions()
+        updated = [*self.sessions, session]
+        self._write(self.sessions_path, updated)
+        self.sessions = updated
         self.sessions_changed.emit()
 
     def session_by_id(self, session_id: str | None):
@@ -857,8 +843,10 @@ class Store(QObject):
                 if value
             ]
 
-            self.sessions[index] = merged
-            self.save_sessions()
+            sessions = list(self.sessions)
+            sessions[index] = merged
+            self._write(self.sessions_path, sessions)
+            self.sessions = sessions
             self.sessions_changed.emit()
             return True
 
@@ -875,6 +863,7 @@ class Store(QObject):
         self.update_session(session_id, updated)
 
     def delete_session(self, session_id: str) -> None:
-        self.sessions = [s for s in self.sessions if s.get("id") != session_id]
-        self.save_sessions()
+        sessions = [s for s in self.sessions if s.get("id") != session_id]
+        self._write(self.sessions_path, sessions)
+        self.sessions = sessions
         self.sessions_changed.emit()

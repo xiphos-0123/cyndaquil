@@ -246,3 +246,31 @@ select a Preview Preset and adjust:
 
 The same framing is used by images, GIFs, videos, previews, and the Visual Companion.
 Crop Zoom can be used to remove encoded black side areas from portrait/phone videos.
+
+DEVELOPMENT AND RECORD SAFETY
+-----------------------------
+The application keeps its existing .cyndaquil JSON file formats and locations.
+Each successful save retains the previous valid file as <filename>.bak. These
+are rolling local backups, not a replacement for copying .cyndaquil to another
+drive periodically. resources remains excluded from Git.
+
+If an existing data file is unreadable or malformed, startup stops rather than
+silently replacing it with empty records. Close Cyndaquil, copy the complete
+.cyndaquil folder somewhere safe, and inspect the affected JSON file and its
+.bak backup. Restore a verified backup manually only after preserving both files.
+
+Code responsibilities:
+- main.py: main window and application lifecycle
+- ui_helpers.py: shared input behavior and completion dialog
+- instance.py: single-instance lock and activation
+- persistence.py: validated JSON reads, atomic writes, and rolling backups
+- store.py: settings, resource, preset, and history operations
+- session.py: timing and session state
+- remaining page/media modules: their respective UI and media responsibilities
+
+Run regression checks with:
+    python -m unittest discover -s tests -v
+
+For headless Linux, set QT_QPA_PLATFORM=offscreen and
+QT_AUDIO_BACKEND=pulseaudio before running the tests. Interactive desktop,
+Windows tray integration, and audible playback require a desktop test.

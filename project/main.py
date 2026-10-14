@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-import hashlib
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QLockFile, QObject, QStandardPaths, QTimer, Qt
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtGui import QAction, QFont, QIcon, QKeySequence, QPixmap, QShortcut
+from PySide6.QtCore import QTimer, Qt
+from PySide6.QtGui import QAction, QFont, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
-    QAbstractScrollArea, QAbstractSpinBox, QApplication, QComboBox, QDialog,
-    QDialogButtonBox, QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu,
-    QMessageBox, QPlainTextEdit, QPushButton, QStackedWidget, QSystemTrayIcon,
+    QApplication,
+    QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu,
+    QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon,
     QVBoxLayout, QWidget
 )
 
 from . import APP_NAME
+from .instance import SingleInstanceGuard
+from .ui_helpers import CompletionDialog, WheelInputGuard
+from .persistence import PersistenceError
 from .bootstrap import runtime_icon, set_windows_app_id
 from .companion import CompanionManager
 from .history import HistoryPage
@@ -30,104 +31,6 @@ from .theme import CYNDAQUIL_QSS
 
 def app_root() -> Path:
     return Path(__file__).resolve().parent.parent
-
-
-class WheelInputGuard(QObject):
-    """
-    Prevent accidental mouse-wheel changes on numeric fields and combo boxes.
-
-    When one of these controls sits inside a scrollable page, the wheel is
-    redirected to that page instead so normal scrolling still works.
-    """
-
-    def eventFilter(self, watched, event):
-        if event.type() != QEvent.Type.Wheel:
-            return False
-
-        if not isinstance(watched, (QAbstractSpinBox, QComboBox)):
-            return False
-
-        parent = watched.parentWidget()
-        scroll_area = None
-        while parent is not None:
-            if isinstance(parent, QAbstractScrollArea):
-                scroll_area = parent
-                break
-            parent = parent.parentWidget()
-
-        if scroll_area is not None:
-            bar = scroll_area.verticalScrollBar()
-            delta = event.angleDelta().y()
-            if delta:
-                step = max(24, bar.singleStep() * 3)
-                bar.setValue(bar.value() - (step if delta > 0 else -step))
-
-        event.accept()
-        return True
-
-
-class CompletionDialog(QDialog):
-    SAVE = 1
-    FAILURE = 2
-
-    def __init__(self, parent=None, initial_note: str = ""):
-        super().__init__(parent)
-        self.setWindowTitle("Complete Focus Session")
-        self.resize(520, 300)
-        self.choice = 0
-
-        root = QVBoxLayout(self)
-
-        title = QLabel("Session Completion")
-        title.setObjectName("SectionTitle")
-
-        description = QLabel(
-            "Optionally record what was completed and the next action."
-        )
-        description.setObjectName("Muted")
-
-        self.note = QPlainTextEdit()
-        self.note.setPlaceholderText("Completion notes (optional)")
-        self.note.setPlainText(initial_note.strip())
-
-        info = QLabel(
-            "Save to History records the focused time. "
-            "Finish as Failure ends the session without creating a History entry."
-        )
-        info.setWordWrap(True)
-        info.setObjectName("Muted")
-
-        buttons = QDialogButtonBox()
-        save = buttons.addButton(
-            "Save to History",
-            QDialogButtonBox.ButtonRole.AcceptRole,
-        )
-        failure = buttons.addButton(
-            "Finish as Failure — Do Not Save",
-            QDialogButtonBox.ButtonRole.DestructiveRole,
-        )
-        cancel = buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
-
-        save.clicked.connect(self._save)
-        failure.clicked.connect(self._failure)
-        cancel.clicked.connect(self.reject)
-
-        root.addWidget(title)
-        root.addWidget(description)
-        root.addWidget(self.note, 1)
-        root.addWidget(info)
-        root.addWidget(buttons)
-
-    def _save(self):
-        self.choice = self.SAVE
-        self.done(self.SAVE)
-
-    def _failure(self):
-        self.choice = self.FAILURE
-        self.done(self.FAILURE)
-
-    def text(self) -> str:
-        return self.note.toPlainText().strip()
 
 
 class MainWindow(QMainWindow):
@@ -480,7 +383,13 @@ class MainWindow(QMainWindow):
         payload = self.session.finish_payload(note)
 
         if save_history:
-            self.store.add_session(payload)
+            try:
+                self.store.add_session(payload)
+            except PersistenceError as error:
+                # Retain the edited completion note when the user retries.
+                self.session.work_notes = [note] if note else []
+                QMessageBox.critical(self, "Session Was Not Saved", str(error))
+                return
 
         if self.audio:
             self.audio.stop()
@@ -618,6 +527,8 @@ class MainWindow(QMainWindow):
             if clicked == discard and not self._confirm_failure_discard(parent):
                 return
             self._end_session("", save_history=(clicked == save))
+            if self.session is not None:
+                return
 
         self._quitting = True
         self.tray.hide()
@@ -632,69 +543,8 @@ class MainWindow(QMainWindow):
             self.hide()
             event.ignore()
         else:
-            self._quitting = True
-            event.accept()
-
-
-class SingleInstanceGuard:
-    """
-    A global lock prevents multiple Cyndaquil processes, including copies
-    launched from different folders. A local server asks the existing process
-    to restore its main window when Cyndaquil is launched again.
-    """
-
-    SERVER_NAME = "Cyndaquil_Productivity_Instance"
-
-    def __init__(self):
-        temp_dir = Path(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.TempLocation)
-        )
-        self.lock = QLockFile(str(temp_dir / "Cyndaquil_Productivity.lock"))
-        self.lock.setStaleLockTime(10000)
-        self.server: QLocalServer | None = None
-
-    def acquire(self) -> bool:
-        if self.lock.tryLock(0):
-            return True
-
-        # Ask the running instance to show itself.
-        self.notify_existing()
-
-        # If the lock was left by a crashed process, allow Qt to remove only
-        # a lock it considers stale, then try once more.
-        if self.lock.removeStaleLockFile():
-            return self.lock.tryLock(0)
-
-        return False
-
-    def notify_existing(self) -> None:
-        socket = QLocalSocket()
-        socket.connectToServer(self.SERVER_NAME)
-        if socket.waitForConnected(250):
-            socket.write(b"show")
-            socket.waitForBytesWritten(250)
-            socket.disconnectFromServer()
-
-    def start_server(self, window: MainWindow) -> None:
-        QLocalServer.removeServer(self.SERVER_NAME)
-        self.server = QLocalServer(window)
-
-        if self.server.listen(self.SERVER_NAME):
-            self.server.newConnection.connect(
-                lambda: self._incoming(window)
-            )
-
-    def _incoming(self, window: MainWindow) -> None:
-        if not self.server:
-            return
-
-        socket = self.server.nextPendingConnection()
-        if socket:
-            socket.waitForReadyRead(100)
-            socket.readAll()
-            socket.disconnectFromServer()
-
-        window.restore_main()
+            event.ignore()
+            self.quit_requested()
 
 
 def run() -> None:
@@ -713,7 +563,11 @@ def run() -> None:
     if not guard.acquire():
         return
 
-    store = Store(app_root())
+    try:
+        store = Store(app_root())
+    except PersistenceError as error:
+        QMessageBox.critical(None, "Unable to Load Cyndaquil", str(error))
+        return
 
     app.setFont(
         QFont(
