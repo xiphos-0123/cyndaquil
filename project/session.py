@@ -7,6 +7,7 @@ import time
 from PySide6.QtCore import QEvent, QObject, QTimer, Signal
 from PySide6.QtWidgets import QApplication
 
+from .history_filters import normalize_tags
 from .utils import new_id, now_iso
 
 
@@ -25,6 +26,7 @@ class SessionManager(QObject):
         self.started_at = now_iso()
         self.distractions: list[str] = []
         self.work_notes: list[str] = []
+        self.tags: list[str] = normalize_tags(config.get("tags", []))
 
         self.tick = QTimer(self)
         self.tick.setInterval(250)
@@ -100,6 +102,7 @@ class SessionManager(QObject):
             "started_at": self.started_at,
             "ended_at": now_iso(),
             "mission": self.config.get("mission", ""),
+            "tags": normalize_tags(self.tags),
             "preset_id": self.config.get("preset_id"),
             "preset_name": self.config.get("preset_name", ""),
             "mode": self.mode,

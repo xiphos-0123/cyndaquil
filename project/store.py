@@ -14,6 +14,7 @@ from .bootstrap import (
     hide_folder_windows,
     replace_managed_asset,
 )
+from .history_filters import normalize_tags
 from .persistence import read_json, write_json
 from .utils import detect_kind, new_id, now_iso, relative_or_absolute, resolve_stored_path
 
@@ -795,6 +796,8 @@ class Store(QObject):
     def add_session(self, session: dict[str, Any]) -> None:
         session = dict(session)
         session.pop("break_seconds", None)
+        if "tags" in session:
+            session["tags"] = normalize_tags(session["tags"])
         updated = [*self.sessions, session]
         self._write(self.sessions_path, updated)
         self.sessions = updated
@@ -818,6 +821,8 @@ class Store(QObject):
             merged.update(dict(updated))
             merged["id"] = session_id
             merged["edited_at"] = now_iso()
+            if "tags" in merged:
+                merged["tags"] = normalize_tags(merged["tags"])
 
             # Keep the stored record internally consistent even if it was
             # imported from an older Cyndaquil version.
@@ -861,6 +866,31 @@ class Store(QObject):
         updated = dict(item)
         updated["focused_seconds"] = max(0, int(seconds))
         self.update_session(session_id, updated)
+
+    def update_session_tags(self, session_ids, tags, *, remove=False) -> int:
+        """Update selected records together; commit to memory only after saving."""
+        selected = set(session_ids)
+        tags = normalize_tags(tags)
+        if not selected or not tags:
+            return 0
+        removed = {tag.casefold() for tag in tags}
+        sessions = list(self.sessions)
+        changed = 0
+        for index, session in enumerate(sessions):
+            if session.get("id") not in selected:
+                continue
+            existing = normalize_tags(session.get("tags", []))
+            updated = ([tag for tag in existing if tag.casefold() not in removed]
+                       if remove else normalize_tags([*existing, *tags]))
+            if updated == existing:
+                continue
+            sessions[index] = {**session, "tags": updated, "edited_at": now_iso()}
+            changed += 1
+        if changed:
+            self._write(self.sessions_path, sessions)
+            self.sessions = sessions
+            self.sessions_changed.emit()
+        return changed
 
     def delete_session(self, session_id: str) -> None:
         sessions = [s for s in self.sessions if s.get("id") != session_id]

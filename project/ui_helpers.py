@@ -1,4 +1,6 @@
 """Shared input behavior and session completion dialog."""
+from .tag_editor import TagEditor
+
 from PySide6.QtCore import QEvent, QObject
 from PySide6.QtWidgets import (QAbstractScrollArea, QAbstractSpinBox, QComboBox, QDialog, QDialogButtonBox, QLabel, QPlainTextEdit, QVBoxLayout)
 
@@ -41,10 +43,10 @@ class CompletionDialog(QDialog):
     SAVE = 1
     FAILURE = 2
 
-    def __init__(self, parent=None, initial_note: str = ""):
+    def __init__(self, parent=None, initial_note: str = "", initial_tags=(), available_tags=()):
         super().__init__(parent)
         self.setWindowTitle("Complete Focus Session")
-        self.resize(520, 300)
+        self.resize(640, 400)
         self.choice = 0
 
         root = QVBoxLayout(self)
@@ -57,6 +59,7 @@ class CompletionDialog(QDialog):
         )
         description.setObjectName("Muted")
 
+        self.tags = TagEditor(initial_tags, available_tags)
         self.note = QPlainTextEdit()
         self.note.setPlaceholderText("Completion notes (optional)")
         self.note.setPlainText(initial_note.strip())
@@ -86,6 +89,8 @@ class CompletionDialog(QDialog):
         root.addWidget(title)
         root.addWidget(description)
         root.addWidget(self.note, 1)
+        root.addWidget(QLabel("Session Tags"))
+        root.addWidget(self.tags)
         root.addWidget(info)
         root.addWidget(buttons)
 

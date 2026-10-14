@@ -274,3 +274,25 @@ Run regression checks with:
 For headless Linux, set QT_QPA_PLATFORM=offscreen and
 QT_AUDIO_BACKEND=pulseaudio before running the tests. Interactive desktop,
 Windows tray integration, and audible playback require a desktop test.
+
+HISTORY FILTERS AND TAGS
+-----------------------
+History now has separate Session History and Statistics tabs. Session History
+opens with all records and supports Today, Last 7/30/90 Days, or inclusive
+custom dates. Dates use the existing Reporting Day Start setting. Undated
+legacy records remain available in All time. Reset filters restores all records.
+
+Add comma-separated tags when completing a session or editing a Session Entry.
+Existing tags can be selected from the suggestions list. To label older records
+in bulk, select rows with Ctrl/Shift and choose Tag selected... to add or remove
+tags. Bulk tagging leaves notes, timestamps, focused time, and other fields intact.
+
+The tag filter includes or excludes sessions matching ANY entered tag, ignoring
+case. It applies to both History views. Date filters affect Session History;
+Statistics retains its own reporting windows within the selected tag group.
+Filtering does not edit or delete records. Old sessions without tags work as before.
+
+Completion note previews retain line breaks; select a record to read the full
+note in the reading pane. Show timing details reveals the additional columns.
+Distraction Dump is collapsed by default in the Session Entry editor and can be
+expanded without changing its saved contents.

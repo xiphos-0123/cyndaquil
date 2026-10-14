@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from . import APP_NAME
 from .instance import SingleInstanceGuard
+from .tag_editor import available_tags
 from .ui_helpers import CompletionDialog, WheelInputGuard
 from .persistence import PersistenceError
 from .bootstrap import runtime_icon, set_windows_app_id
@@ -366,10 +367,12 @@ class MainWindow(QMainWindow):
             else self
         )
 
-        dialog = CompletionDialog(parent, self.session.work_notes_text())
+        dialog = CompletionDialog(parent, self.session.work_notes_text(),
+                                  self.session.tags, available_tags(self.store.sessions))
         result = dialog.exec()
 
         if result == CompletionDialog.SAVE:
+            self.session.tags = dialog.tags.tags()
             self._end_session(dialog.text(), save_history=True)
         elif result == CompletionDialog.FAILURE:
             if self._confirm_failure_discard(parent):

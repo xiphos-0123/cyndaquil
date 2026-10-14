@@ -1,501 +1,22 @@
+"""Session browsing, read-only filters, and productivity statistics."""
 from __future__ import annotations
-
-from copy import deepcopy
 import statistics
 from datetime import date, datetime, timedelta
-
-from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtCore import QDate, QItemSelectionModel, Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView,
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QFormLayout,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMessageBox,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
+    QAbstractItemView, QCheckBox, QComboBox, QDateEdit, QDialog, QFormLayout, QFrame,
+    QGridLayout, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPlainTextEdit,
+    QPushButton, QScrollArea, QSplitter, QTabWidget, QTableWidget, QTableWidgetItem,
+    QVBoxLayout, QWidget,
 )
-
 from .store import Store
-from .utils import (
-    current_reporting_day,
-    format_seconds,
-    parse_iso_datetime,
-    reporting_day_bounds,
-    reporting_day_key,
-)
-
-
-def _seconds_to_editor(value: int | float | None) -> str:
-    seconds = max(0, int(value or 0))
-    hours, remainder = divmod(seconds, 3600)
-    minutes, secs = divmod(remainder, 60)
-    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
-
-
-def _parse_duration(text: str, field_name: str) -> int:
-    raw = text.strip().lower()
-    if not raw:
-        return 0
-    try:
-        if raw.endswith("h"):
-            return max(0, int(round(float(raw[:-1].strip()) * 3600)))
-        if raw.endswith("m"):
-            return max(0, int(round(float(raw[:-1].strip()) * 60)))
-        if raw.endswith("s"):
-            return max(0, int(round(float(raw[:-1].strip()))))
-        if ":" not in raw:
-            return max(0, int(round(float(raw))))
-        parts = raw.split(":")
-        if len(parts) == 2:
-            minutes, seconds = [int(part.strip()) for part in parts]
-            if seconds < 0 or seconds >= 60:
-                raise ValueError
-            return max(0, minutes * 60 + seconds)
-        if len(parts) == 3:
-            hours, minutes, seconds = [int(part.strip()) for part in parts]
-            if minutes < 0 or minutes >= 60 or seconds < 0 or seconds >= 60:
-                raise ValueError
-            return max(0, hours * 3600 + minutes * 60 + seconds)
-    except (TypeError, ValueError):
-        pass
-    raise ValueError(
-        f"{field_name} must be HH:MM:SS, MM:SS, seconds, or a value such as 45m / 1.5h."
-    )
-
-
-def _datetime_to_editor(value: str | None) -> str:
-    parsed = parse_iso_datetime(value)
-    if parsed:
-        return parsed.isoformat(sep=" ", timespec="seconds")
-    return str(value or "")
-
-
-def _parse_datetime(text: str, field_name: str) -> str:
-    raw = text.strip()
-    if not raw:
-        return ""
-    try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError(
-            f"{field_name} must be a valid date/time, for example 2026-10-09 18:45:00+05:30."
-        ) from exc
-    if parsed.tzinfo is None:
-        parsed = parsed.astimezone()
-    return parsed.isoformat(timespec="seconds")
-
-
-def _session_span_seconds(session: dict) -> int | None:
-    start = parse_iso_datetime(session.get("started_at"))
-    end = parse_iso_datetime(session.get("ended_at"))
-    if not start or not end:
-        return None
-    return max(0, int(round((end - start).total_seconds())))
-
-
-def _session_nonfocus_seconds(session: dict) -> int | None:
-    span = _session_span_seconds(session)
-    if span is None:
-        return None
-    return max(0, span - max(0, int(session.get("focused_seconds", 0) or 0)))
-
-
-def _short_datetime(value: str | None) -> str:
-    parsed = parse_iso_datetime(value)
-    return parsed.strftime("%Y-%m-%d %H:%M") if parsed else "—"
-
-
-class DailyProgressChart(QWidget):
-    """Focused-hours bars with a rolling seven-day trend line."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.values: list[tuple[date, int]] = []
-        self.average = 0.0
-        self.rolling: list[float] = []
-        self.setMinimumHeight(250)
-
-    def set_data(self, values: list[tuple[date, int]]) -> None:
-        self.values = list(values)
-        self.average = (
-            sum(seconds for _, seconds in self.values) / len(self.values)
-            if self.values else 0.0
-        )
-        self.rolling = []
-        raw = [seconds for _, seconds in self.values]
-        for index in range(len(raw)):
-            start = max(0, index - 6)
-            window = raw[start:index + 1]
-            self.rolling.append(sum(window) / len(window))
-        self.update()
-
-    def paintEvent(self, event) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        rect = self.rect().adjusted(48, 18, -18, -36)
-        if rect.width() <= 10 or rect.height() <= 10:
-            return
-
-        painter.setPen(QColor("#60788A"))
-        if not self.values:
-            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "No session data yet")
-            return
-
-        max_seconds = max(
-            max(v for _, v in self.values),
-            max(self.rolling, default=0),
-            3600,
-        )
-        max_hours = max(1, int((max_seconds + 3599) // 3600))
-        max_seconds = max_hours * 3600
-
-        for i in range(5):
-            y = rect.bottom() - rect.height() * i / 4
-            painter.setPen(QPen(QColor("#274052"), 1))
-            painter.drawLine(rect.left(), int(y), rect.right(), int(y))
-            hours = max_hours * i / 4
-            painter.setPen(QColor("#8EA4B3"))
-            painter.drawText(2, int(y) - 8, 42, 16, Qt.AlignmentFlag.AlignRight, f"{hours:g}h")
-
-        count = len(self.values)
-        slot = rect.width() / max(1, count)
-        bar_width = max(3.0, min(32.0, slot * 0.58))
-
-        for index, (day, seconds) in enumerate(self.values):
-            ratio = seconds / max_seconds if max_seconds else 0
-            height = rect.height() * ratio
-            x = rect.left() + slot * index + (slot - bar_width) / 2
-            y = rect.bottom() - height
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor("#E66C35") if seconds else QColor("#294A60"))
-            painter.drawRoundedRect(QRectF(x, y, bar_width, max(2, height)), 3, 3)
-
-            label_every = 1 if count <= 14 else 3 if count <= 35 else 7
-            if index % label_every == 0 or index == count - 1:
-                painter.setPen(QColor("#8EA4B3"))
-                painter.drawText(
-                    int(x - slot * 0.25), rect.bottom() + 7,
-                    int(bar_width + slot * 0.5), 20,
-                    Qt.AlignmentFlag.AlignHCenter,
-                    day.strftime("%d %b"),
-                )
-
-        # Selected-window average.
-        if self.average > 0:
-            avg_y = rect.bottom() - rect.height() * (self.average / max_seconds)
-            painter.setPen(QPen(QColor("#FFD16A"), 1, Qt.PenStyle.DashLine))
-            painter.drawLine(rect.left(), int(avg_y), rect.right(), int(avg_y))
-
-        # Rolling 7-day average. For the first six points, this uses all
-        # available days so the progression starts immediately.
-        if self.rolling:
-            painter.setPen(QPen(QColor("#F7E9C8"), 2))
-            previous = None
-            for index, seconds in enumerate(self.rolling):
-                x = rect.left() + slot * index + slot / 2
-                y = rect.bottom() - rect.height() * (seconds / max_seconds)
-                point = (int(x), int(y))
-                if previous is not None:
-                    painter.drawLine(previous[0], previous[1], point[0], point[1])
-                previous = point
-
-        painter.setPen(QColor("#FFD16A"))
-        painter.drawText(rect.right() - 150, rect.top(), 150, 18, Qt.AlignmentFlag.AlignRight, "— window average")
-        painter.setPen(QColor("#F7E9C8"))
-        painter.drawText(rect.right() - 150, rect.top() + 18, 150, 18, Qt.AlignmentFlag.AlignRight, "— rolling 7-day average")
-
-
-class SessionEntryDialog(QDialog):
-    def __init__(self, store: Store, session: dict, parent=None):
-        super().__init__(parent)
-        self.store = store
-        self.original = deepcopy(session)
-        self.setWindowTitle("Session Entry")
-        self.resize(1000, 740)
-        self.setMinimumSize(800, 580)
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(18, 18, 18, 18)
-        root.setSpacing(12)
-
-        header = QHBoxLayout()
-        title_box = QVBoxLayout()
-        title = QLabel("Edit Session Entry")
-        title.setObjectName("Title")
-        subtitle = QLabel(
-            "Edit the complete saved record. Session span and non-focus time are derived from Start, Finish, and Focused Time."
-        )
-        subtitle.setObjectName("Muted")
-        subtitle.setWordWrap(True)
-        title_box.addWidget(title)
-        title_box.addWidget(subtitle)
-        header.addLayout(title_box)
-        header.addStretch()
-        id_label = QLabel(f"ID: {session.get('id', '')}")
-        id_label.setObjectName("Muted")
-        id_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        header.addWidget(id_label)
-        root.addLayout(header)
-
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        root.addWidget(splitter, 1)
-
-        left_scroll = QScrollArea()
-        left_scroll.setWidgetResizable(True)
-        left_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        left = QWidget()
-        left_scroll.setWidget(left)
-        left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(4, 4, 10, 4)
-        left_layout.setSpacing(14)
-
-        details = QFrame()
-        details.setObjectName("Card")
-        form = QFormLayout(details)
-        form.setContentsMargins(16, 16, 16, 16)
-        form.setSpacing(10)
-
-        self.mission = QLineEdit(session.get("mission", ""))
-        self.preset_name = QLineEdit(session.get("preset_name", ""))
-        self.preset_ref = QComboBox()
-        self.preset_ref.addItem("No Preset Reference", None)
-        current_preset_id = session.get("preset_id")
-        for preset in self.store.presets:
-            self.preset_ref.addItem(preset.get("name", "Preset"), preset.get("id"))
-        preset_index = self.preset_ref.findData(current_preset_id)
-        if preset_index >= 0:
-            self.preset_ref.setCurrentIndex(preset_index)
-        elif current_preset_id:
-            self.preset_ref.addItem(f"Missing Preset ({current_preset_id})", current_preset_id)
-            self.preset_ref.setCurrentIndex(self.preset_ref.count() - 1)
-
-        self.mode = QComboBox()
-        self.mode.addItem("Stopwatch", "stopwatch")
-        self.mode.addItem("Timer", "timer")
-        mode_index = self.mode.findData(session.get("mode", "stopwatch"))
-        self.mode.setCurrentIndex(mode_index if mode_index >= 0 else 0)
-
-        self.started_at = QLineEdit(_datetime_to_editor(session.get("started_at")))
-        self.started_at.setPlaceholderText("YYYY-MM-DD HH:MM:SS+offset")
-        self.ended_at = QLineEdit(_datetime_to_editor(session.get("ended_at")))
-        self.ended_at.setPlaceholderText("YYYY-MM-DD HH:MM:SS+offset")
-        self.target = QLineEdit(_seconds_to_editor(session.get("target_seconds", 0)))
-        self.focused = QLineEdit(_seconds_to_editor(session.get("focused_seconds", 0)))
-        for field in (self.target, self.focused):
-            field.setPlaceholderText("HH:MM:SS")
-
-        self.span_value = QLabel("—")
-        self.nonfocus_value = QLabel("—")
-        self.span_value.setObjectName("Muted")
-        self.nonfocus_value.setObjectName("Muted")
-
-        form.addRow("Session Objective", self.mission)
-        form.addRow("Preset Name", self.preset_name)
-        form.addRow("Preset Reference", self.preset_ref)
-        form.addRow("Session Mode", self.mode)
-        form.addRow("Started At", self.started_at)
-        form.addRow("Finished At", self.ended_at)
-        form.addRow("Target Duration", self.target)
-        form.addRow("Focused Time", self.focused)
-        form.addRow("Session Span", self.span_value)
-        form.addRow("Non-Focus Time (Derived)", self.nonfocus_value)
-
-        time_note = QLabel(
-            "Non-Focus Time is calculated automatically as Session Span minus Focused Time. "
-            "Durations accept HH:MM:SS, MM:SS, seconds, 45m, or 1.5h."
-        )
-        time_note.setObjectName("Muted")
-        time_note.setWordWrap(True)
-        form.addRow("", time_note)
-        left_layout.addWidget(details)
-
-        resources = QFrame()
-        resources.setObjectName("Card")
-        resources_layout = QVBoxLayout(resources)
-        resources_layout.setContentsMargins(16, 16, 16, 16)
-        resources_layout.setSpacing(8)
-        resource_title = QLabel("Recorded Ambience")
-        resource_title.setObjectName("SectionTitle")
-        resource_note = QLabel(
-            "These references belong to this History entry; editing them does not modify the original preset."
-        )
-        resource_note.setObjectName("Muted")
-        resource_note.setWordWrap(True)
-
-        self.visual = QComboBox()
-        self.visual.addItem("No Visual", None)
-        current_visual = session.get("visual_id")
-        for item in self.store.resources:
-            if item.get("kind") in {"image", "gif", "video"}:
-                self.visual.addItem(item.get("name", "Visual"), item.get("id"))
-        visual_index = self.visual.findData(current_visual)
-        if visual_index >= 0:
-            self.visual.setCurrentIndex(visual_index)
-        elif current_visual:
-            self.visual.addItem(f"Missing Resource ({current_visual})", current_visual)
-            self.visual.setCurrentIndex(self.visual.count() - 1)
-
-        self.audio_list = QListWidget()
-        self.audio_list.setMinimumHeight(150)
-        self.audio_list.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        current_music = set(session.get("music_ids", []))
-        known_audio_ids = set()
-        for item in self.store.resources:
-            if item.get("kind") != "audio":
-                continue
-            rid = item.get("id")
-            known_audio_ids.add(rid)
-            list_item = QListWidgetItem(self.audio_list)
-            box = QCheckBox(item.get("name", "Audio"))
-            box.setProperty("resource_id", rid)
-            box.setChecked(rid in current_music)
-            self.audio_list.setItemWidget(list_item, box)
-            list_item.setSizeHint(box.sizeHint())
-        for missing_id in sorted(current_music - known_audio_ids):
-            list_item = QListWidgetItem(self.audio_list)
-            box = QCheckBox(f"Missing Resource ({missing_id})")
-            box.setProperty("resource_id", missing_id)
-            box.setChecked(True)
-            self.audio_list.setItemWidget(list_item, box)
-            list_item.setSizeHint(box.sizeHint())
-
-        visual_form = QFormLayout()
-        visual_form.addRow("Visual Resource", self.visual)
-        resources_layout.addWidget(resource_title)
-        resources_layout.addWidget(resource_note)
-        resources_layout.addLayout(visual_form)
-        resources_layout.addWidget(QLabel("Audio Resources"))
-        resources_layout.addWidget(self.audio_list)
-        left_layout.addWidget(resources)
-        left_layout.addStretch()
-        splitter.addWidget(left_scroll)
-
-        right = QWidget()
-        right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(10, 4, 4, 4)
-        right_layout.setSpacing(12)
-
-        note_card = QFrame()
-        note_card.setObjectName("Card")
-        note_layout = QVBoxLayout(note_card)
-        note_layout.setContentsMargins(16, 16, 16, 16)
-        note_title = QLabel("Completion Notes")
-        note_title.setObjectName("SectionTitle")
-        self.completion_note = QPlainTextEdit(session.get("completion_note", "") or "")
-        self.completion_note.setPlaceholderText("Completion notes")
-        self.completion_note.setMinimumHeight(240)
-        note_layout.addWidget(note_title)
-        note_layout.addWidget(self.completion_note, 1)
-
-        distraction_card = QFrame()
-        distraction_card.setObjectName("Card")
-        distraction_layout = QVBoxLayout(distraction_card)
-        distraction_layout.setContentsMargins(16, 16, 16, 16)
-        distraction_title = QLabel("Distraction Log")
-        distraction_title.setObjectName("SectionTitle")
-        distraction_note = QLabel("One entry per line.")
-        distraction_note.setObjectName("Muted")
-        self.distractions = QPlainTextEdit("\n".join(session.get("distractions", []) or []))
-        self.distractions.setMinimumHeight(180)
-        distraction_layout.addWidget(distraction_title)
-        distraction_layout.addWidget(distraction_note)
-        distraction_layout.addWidget(self.distractions, 1)
-
-        right_layout.addWidget(note_card, 3)
-        right_layout.addWidget(distraction_card, 2)
-        splitter.addWidget(right)
-        splitter.setSizes([500, 500])
-
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
-        save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
-        save_button.setText("Save Session Entry")
-        save_button.setObjectName("Primary")
-        buttons.accepted.connect(self.save)
-        buttons.rejected.connect(self.reject)
-        root.addWidget(buttons)
-
-        self.started_at.textChanged.connect(self._refresh_derived_times)
-        self.ended_at.textChanged.connect(self._refresh_derived_times)
-        self.focused.textChanged.connect(self._refresh_derived_times)
-        self._refresh_derived_times()
-
-    def _refresh_derived_times(self) -> None:
-        try:
-            start = parse_iso_datetime(_parse_datetime(self.started_at.text(), "Started At")) if self.started_at.text().strip() else None
-            end = parse_iso_datetime(_parse_datetime(self.ended_at.text(), "Finished At")) if self.ended_at.text().strip() else None
-            focused = _parse_duration(self.focused.text(), "Focused Time")
-        except ValueError:
-            self.span_value.setText("—")
-            self.nonfocus_value.setText("—")
-            return
-        if not start or not end or end < start:
-            self.span_value.setText("—")
-            self.nonfocus_value.setText("—")
-            return
-        span = max(0, int((end - start).total_seconds()))
-        self.span_value.setText(format_seconds(span))
-        self.nonfocus_value.setText(format_seconds(max(0, span - focused)))
-
-    def _selected_audio_ids(self) -> list[str]:
-        result = []
-        for row in range(self.audio_list.count()):
-            item = self.audio_list.item(row)
-            box = self.audio_list.itemWidget(item)
-            if box and box.isChecked():
-                rid = box.property("resource_id")
-                if rid:
-                    result.append(str(rid))
-        return result
-
-    def save(self) -> None:
-        try:
-            started_at = _parse_datetime(self.started_at.text(), "Started At")
-            ended_at = _parse_datetime(self.ended_at.text(), "Finished At")
-            target_seconds = _parse_duration(self.target.text(), "Target Duration")
-            focused_seconds = _parse_duration(self.focused.text(), "Focused Time")
-        except ValueError as exc:
-            QMessageBox.warning(self, "Invalid Session Entry", str(exc))
-            return
-
-        if started_at and ended_at:
-            if datetime.fromisoformat(ended_at) < datetime.fromisoformat(started_at):
-                QMessageBox.warning(self, "Invalid Session Entry", "Finished At cannot be earlier than Started At.")
-                return
-
-        updated = dict(self.original)
-        updated.pop("break_seconds", None)
-        updated.update({
-            "mission": self.mission.text().strip(),
-            "preset_name": self.preset_name.text().strip(),
-            "preset_id": self.preset_ref.currentData(),
-            "mode": self.mode.currentData(),
-            "started_at": started_at,
-            "ended_at": ended_at,
-            "target_seconds": target_seconds,
-            "focused_seconds": focused_seconds,
-            "completion_note": self.completion_note.toPlainText().strip(),
-            "distractions": [line.strip() for line in self.distractions.toPlainText().splitlines() if line.strip()],
-            "music_ids": self._selected_audio_ids(),
-            "visual_id": self.visual.currentData(),
-        })
-        self.store.update_session(self.original.get("id"), updated)
-        self.accept()
+from .history_filters import filter_sessions, normalize_tags
+from .tag_editor import BulkTagDialog, TagEditor, available_tags
+from .persistence import PersistenceError
+from .history_chart import DailyProgressChart
+from .session_entry import SessionEntryDialog
+from .history_records import _session_span_seconds, _session_nonfocus_seconds, _short_datetime
+from .utils import current_reporting_day, format_seconds, parse_iso_datetime, reporting_day_bounds, reporting_day_key
 
 
 class HistoryPage(QWidget):
@@ -507,10 +28,39 @@ class HistoryPage(QWidget):
         root.setContentsMargins(20, 20, 20, 20)
         root.setSpacing(12)
 
-        header = QHBoxLayout()
-        title_box = QVBoxLayout()
         title = QLabel("History & Productivity")
         title.setObjectName("Title")
+        root.addWidget(title)
+        tag_controls = QHBoxLayout()
+        tag_controls.addWidget(QLabel("Tags"))
+        self.tag_filter = TagEditor(available=available_tags(store.sessions))
+        self.tag_mode = QComboBox()
+        self.tag_mode.addItem("Include any", "include")
+        self.tag_mode.addItem("Exclude any", "exclude")
+        tag_controls.addWidget(self.tag_mode)
+        tag_controls.addWidget(self.tag_filter, 1)
+        root.addLayout(tag_controls)
+        tag_hint = QLabel("Leave tags empty to show everything. Tag filters apply to both views; dates below filter Session History.")
+        tag_hint.setObjectName("Muted")
+        tag_hint.setWordWrap(True)
+        root.addWidget(tag_hint)
+        self.tabs = QTabWidget()
+        root.addWidget(self.tabs, 1)
+        history_view = QWidget()
+        history_layout = QVBoxLayout(history_view)
+        stats_scroll = QScrollArea()
+        stats_scroll.setWidgetResizable(True)
+        stats_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        stats_view = QWidget()
+        stats_scroll.setWidget(stats_view)
+        stats_layout = QVBoxLayout(stats_view)
+        self.tabs.addTab(history_view, "Session History")
+        self.tabs.addTab(stats_scroll, "Statistics")
+
+        header = QHBoxLayout()
+        title_box = QVBoxLayout()
+        title = QLabel("Statistics")
+        title.setObjectName("SectionTitle")
         subtitle = QLabel(
             "Time-based productivity analysis using a configurable reporting-day boundary. "
             "Changing the boundary only changes grouping; it never rewrites the original session timestamps."
@@ -534,7 +84,7 @@ class HistoryPage(QWidget):
         reporting_form.addRow("Reporting Day Starts", self.day_start)
         reporting_form.addRow("Progression Window", self.chart_days)
         header.addWidget(reporting_controls)
-        root.addLayout(header)
+        stats_layout.addLayout(header)
 
         stats = QGridLayout()
         stats.setHorizontalSpacing(10)
@@ -553,7 +103,7 @@ class HistoryPage(QWidget):
         )
         for index, card in enumerate(cards):
             stats.addWidget(card[0], index // 4, index % 4)
-        root.addLayout(stats)
+        stats_layout.addLayout(stats)
 
         overview = QHBoxLayout()
         overview.setSpacing(12)
@@ -599,7 +149,37 @@ class HistoryPage(QWidget):
 
         overview.addWidget(chart_card, 3)
         overview.addWidget(analysis_card, 2)
-        root.addLayout(overview, 2)
+        stats_layout.addLayout(overview, 2)
+
+        dates = QHBoxLayout()
+        dates.addWidget(QLabel("Show"))
+        self.period = QComboBox()
+        for label, days in (("All time", 0), ("Today", 1), ("Last 7 days", 7),
+                            ("Last 30 days", 30), ("Last 90 days", 90), ("Custom dates", -1)):
+            self.period.addItem(label, days)
+        dates.addWidget(self.period)
+        self.from_date = QDateEdit(QDate.currentDate().addDays(-6))
+        self.to_date = QDateEdit(QDate.currentDate())
+        for editor in (self.from_date, self.to_date):
+            editor.setCalendarPopup(True)
+            editor.setDisplayFormat("dd MMM yyyy")
+        self.date_range_controls = QWidget()
+        date_range = QHBoxLayout(self.date_range_controls)
+        date_range.setContentsMargins(0, 0, 0, 0)
+        date_range.addWidget(QLabel("From"))
+        date_range.addWidget(self.from_date)
+        date_range.addWidget(QLabel("Through"))
+        date_range.addWidget(self.to_date)
+        date_range.addStretch()
+        dates.addStretch()
+        self.clear_filters = QPushButton("Reset filters")
+        dates.addWidget(self.clear_filters)
+        history_layout.addLayout(dates)
+        history_layout.addWidget(self.date_range_controls)
+        self.date_range_controls.hide()
+        self.result_count = QLabel()
+        self.result_count.setObjectName("Muted")
+        history_layout.addWidget(self.result_count)
 
         buttons = QHBoxLayout()
         self.open_entry = QPushButton("Open Session Entry…")
@@ -607,11 +187,16 @@ class HistoryPage(QWidget):
         self.delete = QPushButton("Delete Session")
         self.delete.setObjectName("Danger")
         buttons.addWidget(self.open_entry)
+        self.tag_selected = QPushButton("Tag selected…")
+        buttons.addWidget(self.tag_selected)
+        self.show_details = QCheckBox("Show timing details")
+        self.show_details.toggled.connect(self._set_timing_details)
+        buttons.addWidget(self.show_details)
         buttons.addStretch()
         buttons.addWidget(self.delete)
-        root.addLayout(buttons)
+        history_layout.addLayout(buttons)
 
-        self.table = QTableWidget(0, 9)
+        self.table = QTableWidget(0, 10)
         self.table.setHorizontalHeaderLabels([
             "Started",
             "Finished",
@@ -621,25 +206,98 @@ class HistoryPage(QWidget):
             "Focused",
             "Non-Focus",
             "Preset",
-            "Completion Note",
+            "Tags",
+            "Completion Notes",
         ])
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         self.table.horizontalHeader().setStretchLastSection(True)
-        root.addWidget(self.table, 3)
+        self.table.setWordWrap(True)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self._set_timing_details(False)
+        self.session_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.session_splitter.setChildrenCollapsible(False)
+        self.session_splitter.addWidget(self.table)
+        self.note_detail = QPlainTextEdit()
+        self.note_detail.setReadOnly(True)
+        self.note_detail.setPlaceholderText("Select a session to read its complete notes here.")
+        self.note_detail.setAccessibleName("Selected session completion notes")
+        self.note_detail.setMinimumHeight(70)
+        note_pane = QWidget()
+        note_layout = QVBoxLayout(note_pane)
+        note_layout.setContentsMargins(0, 0, 0, 0)
+        note_layout.addWidget(QLabel("Selected Session · Completion Notes"))
+        note_layout.addWidget(self.note_detail)
+        self.session_splitter.addWidget(note_pane)
+        self.session_splitter.setStretchFactor(0, 1)
+        self.session_splitter.setStretchFactor(1, 0)
+        self.session_splitter.setSizes([500, 130])
+        history_layout.addWidget(self.session_splitter, 1)
+        self.period.currentIndexChanged.connect(self._filters_changed)
+        self.from_date.dateChanged.connect(self._filters_changed)
+        self.to_date.dateChanged.connect(self._filters_changed)
+        self.tag_filter.changed.connect(self.refresh)
+        self.tag_mode.currentIndexChanged.connect(self.refresh)
+        self.clear_filters.clicked.connect(self._reset_filters)
+        self.from_date.setEnabled(False)
+        self.to_date.setEnabled(False)
 
+        self.tag_selected.clicked.connect(self.tag_selected_entries)
         self.open_entry.clicked.connect(self.open_selected_entry)
         self.delete.clicked.connect(self.delete_entry)
         self.table.cellDoubleClicked.connect(lambda row, column: self.open_selected_entry())
-        self.table.itemSelectionChanged.connect(self._update_actions)
+        self.table.itemSelectionChanged.connect(self._selection_changed)
         self.day_start.currentIndexChanged.connect(self._reporting_options_changed)
         self.chart_days.currentIndexChanged.connect(self._reporting_options_changed)
         self.store.sessions_changed.connect(self.refresh)
         self.store.settings_changed.connect(self._load_reporting_settings)
         self._load_reporting_settings()
         self.refresh()
+
+    def _set_timing_details(self, visible):
+        for column in (1, 3, 4, 6, 7):
+            self.table.setColumnHidden(column, not visible)
+
+    def _tagged_sessions(self):
+        return filter_sessions(self.store.sessions, tags=self.tag_filter.tags(),
+                               tag_mode=self.tag_mode.currentData())
+
+    def _history_sessions(self):
+        days = self.period.currentData()
+        start = end = None
+        if days == -1:
+            start = self.from_date.date().toPython()
+            end = self.to_date.date().toPython()
+            if start > end:
+                return []
+        elif days:
+            end = current_reporting_day(int(self.store.settings.get("history_day_start_hour", 0)))
+            start = end - timedelta(days=days - 1)
+        return filter_sessions(self._tagged_sessions(), start=start, end=end,
+                               start_hour=int(self.store.settings.get("history_day_start_hour", 0)))
+
+    def _filters_changed(self, *args):
+        custom = self.period.currentData() == -1
+        self.date_range_controls.setVisible(custom)
+        self.from_date.setEnabled(custom)
+        self.to_date.setEnabled(custom)
+        self.refresh()
+
+    def _reset_filters(self):
+        self.period.setCurrentIndex(0)
+        self.tag_filter.text.clear()
+        self.tag_mode.setCurrentIndex(0)
+        self.refresh()
+
+    def _selection_changed(self):
+        self._update_actions()
+        session = self.selected_session()
+        self.note_detail.setPlainText((session.get("completion_note", "") or "") if session else "")
 
     def _card(self, label):
         frame = QFrame()
@@ -685,17 +343,28 @@ class HistoryPage(QWidget):
         self.refresh()
 
     def refresh(self) -> None:
-        selected = self.selected_id()
+        selected = set(self.selected_ids())
         self.table.setRowCount(0)
-        selected_row = -1
+        selected_rows = []
 
-        for session in reversed(self.store.sessions):
+        self.tag_filter.set_available(available_tags(self.store.sessions))
+        sessions = self._history_sessions()
+        invalid_dates = self.period.currentData() == -1 and self.from_date.date() > self.to_date.date()
+        self.result_count.setText(
+            "Choose a From date on or before Through." if invalid_dates else
+            f"{len(sessions)} of {len(self.store.sessions)} sessions · Newest first · Dates use the reporting-day boundary"
+        )
+        def started_timestamp(session):
+            started = parse_iso_datetime(session.get("started_at"))
+            return started.timestamp() if started else float('-inf')
+        for session in sorted(sessions, key=started_timestamp, reverse=True):
             row = self.table.rowCount()
             self.table.insertRow(row)
             note = session.get("completion_note", "") or ""
-            note_preview = " ".join(note.split())
-            if len(note_preview) > 100:
-                note_preview = note_preview[:97] + "…"
+            lines = note.splitlines()
+            note_preview = "\n".join(line[:120] + ("…" if len(line) > 120 else "") for line in lines[:3])
+            if len(lines) > 3:
+                note_preview += "\n…"
             span = _session_span_seconds(session)
             nonfocus = _session_nonfocus_seconds(session)
             values = [
@@ -707,6 +376,7 @@ class HistoryPage(QWidget):
                 format_seconds(session.get("focused_seconds", 0)),
                 format_seconds(nonfocus) if nonfocus is not None else "—",
                 session.get("preset_name", ""),
+                ", ".join(normalize_tags(session.get("tags", []))),
                 note_preview,
             ]
             for col, value in enumerate(values):
@@ -715,22 +385,27 @@ class HistoryPage(QWidget):
                     item.setData(Qt.ItemDataRole.UserRole, session.get("id"))
                 if col == 6:
                     item.setToolTip("Derived automatically: Session Span minus Focused Time")
-                if col == 8:
+                if col == 9:
                     item.setToolTip(note)
                 self.table.setItem(row, col, item)
-            if session.get("id") == selected:
-                selected_row = row
+            if session.get("id") in selected:
+                selected_rows.append(row)
 
-        self.table.resizeColumnsToContents()
+        for column, width in enumerate((145, 145, 180, 90, 100, 100, 100, 140, 150, 340)):
+            self.table.setColumnWidth(column, width)
+        self.table.resizeRowsToContents()
         self.table.horizontalHeader().setStretchLastSection(True)
-        if selected_row >= 0:
-            self.table.selectRow(selected_row)
+        for row in selected_rows:
+            self.table.selectionModel().select(
+                self.table.model().index(row, 0),
+                QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows,
+            )
         self._refresh_stats()
-        self._update_actions()
+        self._selection_changed()
 
     def _daily_totals(self, start_hour: int) -> dict[date, int]:
         totals: dict[date, int] = {}
-        for session in self.store.sessions:
+        for session in self._tagged_sessions():
             started = parse_iso_datetime(session.get("started_at"))
             if not started:
                 continue
@@ -821,7 +496,7 @@ class HistoryPage(QWidget):
             self.trend30[1].setText("—")
             self.trend30[2].setText("No comparison data yet")
 
-        total_seconds = sum(max(0, int(s.get("focused_seconds", 0) or 0)) for s in self.store.sessions)
+        total_seconds = sum(max(0, int(s.get("focused_seconds", 0) or 0)) for s in self._tagged_sessions())
         self.total[1].setText(format_seconds(total_seconds))
         if totals:
             first_day = min(totals)
@@ -847,13 +522,13 @@ class HistoryPage(QWidget):
         # Session-duration analysis.
         focused_values = [
             max(0, int(s.get("focused_seconds", 0) or 0))
-            for s in self.store.sessions
+            for s in self._tagged_sessions()
             if int(s.get("focused_seconds", 0) or 0) > 0
         ]
         if focused_values:
             avg_focus = sum(focused_values) / len(focused_values)
             median_focus = statistics.median(focused_values)
-            longest = max(self.store.sessions, key=lambda s: int(s.get("focused_seconds", 0) or 0))
+            longest = max(self._tagged_sessions(), key=lambda s: int(s.get("focused_seconds", 0) or 0))
             self.average_session.setText(f"Average Focused Session\n{format_seconds(avg_focus)}")
             self.median_session.setText(f"Median Focused Session\n{format_seconds(median_focus)}")
             self.longest_session.setText(
@@ -868,7 +543,7 @@ class HistoryPage(QWidget):
         nonfocus_values: list[int] = []
         efficiency_focus = 0
         efficiency_span = 0
-        for session in self.store.sessions:
+        for session in self._tagged_sessions():
             span = _session_span_seconds(session)
             if span is None or span <= 0:
                 continue
@@ -910,12 +585,25 @@ class HistoryPage(QWidget):
             self.best7.setText("Best 7-Day Window\n—")
             self.best30.setText("Best 30-Day Window\n—")
 
+    def selected_ids(self):
+        return [self.table.item(index.row(), 0).data(Qt.ItemDataRole.UserRole)
+                for index in self.table.selectionModel().selectedRows()
+                if self.table.item(index.row(), 0)]
+
     def selected_id(self):
-        row = self.table.currentRow()
-        if row < 0:
-            return None
-        item = self.table.item(row, 0)
-        return item.data(Qt.ItemDataRole.UserRole) if item else None
+        ids = self.selected_ids()
+        return ids[0] if len(ids) == 1 else None
+
+    def tag_selected_entries(self):
+        ids = self.selected_ids()
+        if not ids:
+            return
+        dialog = BulkTagDialog(len(ids), available_tags(self.store.sessions), self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            try:
+                self.store.update_session_tags(ids, dialog.editor.tags(), remove=dialog.mode.currentData())
+            except PersistenceError as error:
+                QMessageBox.critical(self, "Tags Were Not Saved", str(error))
 
     def selected_session(self):
         return self.store.session_by_id(self.selected_id())
@@ -924,6 +612,7 @@ class HistoryPage(QWidget):
         selected = self.selected_id() is not None
         self.open_entry.setEnabled(selected)
         self.delete.setEnabled(selected)
+        self.tag_selected.setEnabled(bool(self.selected_ids()))
 
     def open_selected_entry(self) -> None:
         session = self.selected_session()
@@ -938,5 +627,8 @@ class HistoryPage(QWidget):
             "Delete the selected session permanently?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         ) == QMessageBox.StandardButton.Yes:
-            self.store.delete_session(sid)
+            try:
+                self.store.delete_session(sid)
+            except PersistenceError as error:
+                QMessageBox.critical(self, "Session Was Not Deleted", str(error))
 
