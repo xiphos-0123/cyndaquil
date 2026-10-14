@@ -70,7 +70,11 @@ class SessionManager(QObject):
         self.accumulated = max(0.0, current + seconds)
         if self.state == "running":
             self.segment_started = time.monotonic()
-        if self.mode == "timer" and self.accumulated < self.target_seconds and self.state == "complete":
+        if (
+            self.mode == "timer"
+            and self.accumulated < self.target_seconds
+            and self.state == "complete"
+        ):
             self.state = "paused"
         self.changed.emit()
 
@@ -115,7 +119,11 @@ class SessionManager(QObject):
         }
 
     def _tick(self) -> None:
-        if self.mode == "timer" and self.state == "running" and self.elapsed_focus() >= self.target_seconds:
+        if (
+            self.mode == "timer"
+            and self.state == "running"
+            and self.elapsed_focus() >= self.target_seconds
+        ):
             self.accumulated = float(self.target_seconds)
             self.segment_started = None
             self.state = "complete"
@@ -165,8 +173,10 @@ class IdleMonitor(QObject):
     def idle_seconds(self) -> int:
         if os.name == "nt":
             try:
+
                 class LASTINPUTINFO(ctypes.Structure):
                     _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
                 info = LASTINPUTINFO()
                 info.cbSize = ctypes.sizeof(info)
                 if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):

@@ -4,8 +4,17 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox,
-    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+    QAbstractItemView,
+    QCheckBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
 from .store import Store
@@ -59,15 +68,17 @@ class ResourcesPage(QWidget):
         self.scan_status.setObjectName("Muted")
 
         self.table = QTableWidget(0, 7)
-        self.table.setHorizontalHeaderLabels([
-            "Name",
-            "Type",
-            "Source",
-            "Status",
-            "Backup",
-            "Filename",
-            "Primary Location",
-        ])
+        self.table.setHorizontalHeaderLabels(
+            [
+                "Name",
+                "Type",
+                "Source",
+                "Status",
+                "Backup",
+                "Filename",
+                "Primary Location",
+            ]
+        )
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
@@ -171,8 +182,7 @@ class ResourcesPage(QWidget):
                     Path(value),
                     import_primary=self.import_primary.isChecked(),
                     keep_backup=(
-                        self.keep_backup.isChecked()
-                        and not self.import_primary.isChecked()
+                        self.keep_backup.isChecked() and not self.import_primary.isChecked()
                     ),
                 )
             except Exception as exc:
@@ -238,21 +248,27 @@ class ResourcesPage(QWidget):
         if not resource or resource.get("special"):
             return
 
-        if QMessageBox.question(
-            self,
-            "Remove Resource",
-            f"Remove “{resource.get('name', '')}” from the Resource Library?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        ) != QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(
+                self,
+                "Remove Resource",
+                f"Remove “{resource.get('name', '')}” from the Resource Library?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            != QMessageBox.StandardButton.Yes
+        ):
             return
 
         delete_local = False
         if resource.get("managed") or resource.get("backup_path"):
-            delete_local = QMessageBox.question(
-                self,
-                "Delete Local Files",
-                "Also delete Cyndaquil-managed copies stored inside the resources folder?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            ) == QMessageBox.StandardButton.Yes
+            delete_local = (
+                QMessageBox.question(
+                    self,
+                    "Delete Local Files",
+                    "Also delete Cyndaquil-managed copies stored inside the resources folder?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                == QMessageBox.StandardButton.Yes
+            )
 
         self.store.remove_resource(resource.get("id"), delete_local_files=delete_local)

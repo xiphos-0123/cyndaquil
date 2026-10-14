@@ -5,8 +5,10 @@ import random
 from PySide6.QtCore import QObject, QRectF, QSizeF, Qt, QUrl, Signal
 from PySide6.QtGui import QMovie, QPainter, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
+
 try:
     from PySide6.QtMultimediaWidgets import QGraphicsVideoItem
+
     _HAS_GRAPHICS_VIDEO = True
 except Exception:  # pragma: no cover - compatibility fallback
     QGraphicsVideoItem = None
@@ -178,7 +180,9 @@ class MediaVisual(QWidget):
         self.video_audio = QAudioOutput(self)
         self.video_audio.setVolume(0.0)
         self.player.setAudioOutput(self.video_audio)
-        self.player.setVideoOutput(self.video_item if self.video_item is not None else self.video_widget)
+        self.player.setVideoOutput(
+            self.video_item if self.video_item is not None else self.video_widget
+        )
         self.player.mediaStatusChanged.connect(self._video_status)
 
         self.stack.addWidget(self.image)
@@ -222,7 +226,9 @@ class MediaVisual(QWidget):
         self._refresh_current()
 
     def _load_stored_framing(self, resource_id: str | None) -> None:
-        framing = self.store.visual_framing(resource_id) if hasattr(self.store, "visual_framing") else {}
+        framing = (
+            self.store.visual_framing(resource_id) if hasattr(self.store, "visual_framing") else {}
+        )
         self.fit_mode = framing.get("fit", "contain")
         self.zoom = int(framing.get("zoom", 100))
         self.pan_x = int(framing.get("pan_x", 0))
@@ -381,7 +387,11 @@ class MediaVisual(QWidget):
             self.image.setPixmap(shown)
 
     def _layout_video(self) -> None:
-        if self.video_item is not None and self.video_view is not None and self.video_scene is not None:
+        if (
+            self.video_item is not None
+            and self.video_view is not None
+            and self.video_scene is not None
+        ):
             viewport = self.video_view.viewport().size()
             tw, th = max(1, viewport.width()), max(1, viewport.height())
             sw = self._video_native.width() if self._video_native.width() > 0 else 16

@@ -1,19 +1,43 @@
 """Full session record editor; changes are persisted only on explicit save."""
+
 from __future__ import annotations
+
 from copy import deepcopy
 from datetime import datetime
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-    QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton,
-    QScrollArea, QSplitter, QVBoxLayout, QWidget,
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
+    QScrollArea,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
 )
-from .store import Store
+
+from .history_records import (
+    _datetime_to_editor,
+    _parse_datetime,
+    _parse_duration,
+    _seconds_to_editor,
+)
 from .persistence import PersistenceError
+from .store import Store
 from .tag_editor import TagEditor, available_tags
 from .utils import format_seconds, parse_iso_datetime
-from .history_records import _seconds_to_editor, _parse_duration, _datetime_to_editor, _parse_datetime
 
 
 class SessionEntryDialog(QDialog):
@@ -219,7 +243,9 @@ class SessionEntryDialog(QDialog):
         self.distraction_toggle.setCheckable(True)
         self.distraction_toggle.toggled.connect(distraction_card.setVisible)
         self.distraction_toggle.toggled.connect(
-            lambda shown: self.distraction_toggle.setText("Hide Distraction Dump" if shown else "Show Distraction Dump")
+            lambda shown: self.distraction_toggle.setText(
+                "Hide Distraction Dump" if shown else "Show Distraction Dump"
+            )
         )
         distraction_card.hide()
         right_layout.addWidget(self.distraction_toggle)
@@ -227,7 +253,9 @@ class SessionEntryDialog(QDialog):
         splitter.addWidget(right)
         splitter.setSizes([500, 500])
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
         save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
         save_button.setText("Save Session Entry")
         save_button.setObjectName("Primary")
@@ -242,8 +270,16 @@ class SessionEntryDialog(QDialog):
 
     def _refresh_derived_times(self) -> None:
         try:
-            start = parse_iso_datetime(_parse_datetime(self.started_at.text(), "Started At")) if self.started_at.text().strip() else None
-            end = parse_iso_datetime(_parse_datetime(self.ended_at.text(), "Finished At")) if self.ended_at.text().strip() else None
+            start = (
+                parse_iso_datetime(_parse_datetime(self.started_at.text(), "Started At"))
+                if self.started_at.text().strip()
+                else None
+            )
+            end = (
+                parse_iso_datetime(_parse_datetime(self.ended_at.text(), "Finished At"))
+                if self.ended_at.text().strip()
+                else None
+            )
             focused = _parse_duration(self.focused.text(), "Focused Time")
         except ValueError:
             self.span_value.setText("—")
@@ -280,7 +316,9 @@ class SessionEntryDialog(QDialog):
 
         if started_at and ended_at:
             if datetime.fromisoformat(ended_at) < datetime.fromisoformat(started_at):
-                QMessageBox.warning(self, "Invalid Session Entry", "Finished At cannot be earlier than Started At.")
+                QMessageBox.warning(
+                    self, "Invalid Session Entry", "Finished At cannot be earlier than Started At."
+                )
                 return
 
         # Keep original timestamp precision and note/distraction formatting when
@@ -294,33 +332,40 @@ class SessionEntryDialog(QDialog):
             note = note.strip()
         distraction_text = self.distractions.toPlainText()
         original_distractions = self.original.get("distractions", []) or []
-        distractions = (original_distractions if distraction_text == "\n".join(original_distractions)
-                        else [line.strip() for line in distraction_text.splitlines() if line.strip()])
+        distractions = (
+            original_distractions
+            if distraction_text == "\n".join(original_distractions)
+            else [line.strip() for line in distraction_text.splitlines() if line.strip()]
+        )
         updated = dict(self.original)
         updated.pop("break_seconds", None)
-        updated.update({
-            "mission": self.mission.text().strip(),
-            "tags": self.tags.tags(),
-            "preset_name": self.preset_name.text().strip(),
-            "preset_id": self.preset_ref.currentData(),
-            "mode": self.mode.currentData(),
-            "started_at": started_at,
-            "ended_at": ended_at,
-            "target_seconds": target_seconds,
-            "focused_seconds": focused_seconds,
-            "completion_note": note,
-            "distractions": distractions,
-            "music_ids": self._selected_audio_ids(),
-            "visual_id": self.visual.currentData(),
-        })
+        updated.update(
+            {
+                "mission": self.mission.text().strip(),
+                "tags": self.tags.tags(),
+                "preset_name": self.preset_name.text().strip(),
+                "preset_id": self.preset_ref.currentData(),
+                "mode": self.mode.currentData(),
+                "started_at": started_at,
+                "ended_at": ended_at,
+                "target_seconds": target_seconds,
+                "focused_seconds": focused_seconds,
+                "completion_note": note,
+                "distractions": distractions,
+                "music_ids": self._selected_audio_ids(),
+                "visual_id": self.visual.currentData(),
+            }
+        )
         try:
             saved = self.store.update_session(self.original.get("id"), updated)
         except PersistenceError as error:
             QMessageBox.critical(self, "Session Was Not Saved", str(error))
             return
         if not saved:
-            QMessageBox.warning(self, "Session Not Found", "This session no longer exists. Your edits have not been saved.")
+            QMessageBox.warning(
+                self,
+                "Session Not Found",
+                "This session no longer exists. Your edits have not been saved.",
+            )
             return
         self.accept()
-
-

@@ -1,6 +1,9 @@
 """Focused-time chart rendering."""
+
 from __future__ import annotations
+
 from datetime import date
+
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
@@ -19,14 +22,13 @@ class DailyProgressChart(QWidget):
     def set_data(self, values: list[tuple[date, int]]) -> None:
         self.values = list(values)
         self.average = (
-            sum(seconds for _, seconds in self.values) / len(self.values)
-            if self.values else 0.0
+            sum(seconds for _, seconds in self.values) / len(self.values) if self.values else 0.0
         )
         self.rolling = []
         raw = [seconds for _, seconds in self.values]
         for index in range(len(raw)):
             start = max(0, index - 6)
-            window = raw[start:index + 1]
+            window = raw[start : index + 1]
             self.rolling.append(sum(window) / len(window))
         self.update()
 
@@ -75,8 +77,10 @@ class DailyProgressChart(QWidget):
             if index % label_every == 0 or index == count - 1:
                 painter.setPen(QColor("#8EA4B3"))
                 painter.drawText(
-                    int(x - slot * 0.25), rect.bottom() + 7,
-                    int(bar_width + slot * 0.5), 20,
+                    int(x - slot * 0.25),
+                    rect.bottom() + 7,
+                    int(bar_width + slot * 0.5),
+                    20,
                     Qt.AlignmentFlag.AlignHCenter,
                     day.strftime("%d %b"),
                 )
@@ -101,8 +105,15 @@ class DailyProgressChart(QWidget):
                 previous = point
 
         painter.setPen(QColor("#FFD16A"))
-        painter.drawText(rect.right() - 150, rect.top(), 150, 18, Qt.AlignmentFlag.AlignRight, "— window average")
+        painter.drawText(
+            rect.right() - 150, rect.top(), 150, 18, Qt.AlignmentFlag.AlignRight, "— window average"
+        )
         painter.setPen(QColor("#F7E9C8"))
-        painter.drawText(rect.right() - 150, rect.top() + 18, 150, 18, Qt.AlignmentFlag.AlignRight, "— rolling 7-day average")
-
-
+        painter.drawText(
+            rect.right() - 150,
+            rect.top() + 18,
+            150,
+            18,
+            Qt.AlignmentFlag.AlignRight,
+            "— rolling 7-day average",
+        )

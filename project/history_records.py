@@ -1,6 +1,9 @@
 """Session duration/date formatting and validation shared by History views."""
+
 from __future__ import annotations
+
 from datetime import datetime
+
 from .utils import parse_iso_datetime
 
 
@@ -82,5 +85,3 @@ def _session_nonfocus_seconds(session: dict) -> int | None:
 def _short_datetime(value: str | None) -> str:
     parsed = parse_iso_datetime(value)
     return parsed.strftime("%Y-%m-%d %H:%M") if parsed else "—"
-
-

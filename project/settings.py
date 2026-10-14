@@ -184,18 +184,28 @@ class SettingsPage(QWidget):
         # ---------- default ambience ----------
         defaults = QGroupBox("Default Preset Ambience")
         defaults_form = QFormLayout(defaults)
-        self.audio_status = QLabel(); self.audio_status.setObjectName("Muted")
-        self.visual_status = QLabel(); self.visual_status.setObjectName("Muted")
+        self.audio_status = QLabel()
+        self.audio_status.setObjectName("Muted")
+        self.visual_status = QLabel()
+        self.visual_status.setObjectName("Muted")
 
-        audio_controls = QWidget(); audio_row = QHBoxLayout(audio_controls); audio_row.setContentsMargins(0,0,0,0)
+        audio_controls = QWidget()
+        audio_row = QHBoxLayout(audio_controls)
+        audio_row.setContentsMargins(0, 0, 0, 0)
         self.choose_audio = QPushButton("Choose Default Audio…")
         self.reset_audio = QPushButton("Use Generated Audio")
-        audio_row.addWidget(self.choose_audio); audio_row.addWidget(self.reset_audio); audio_row.addStretch()
+        audio_row.addWidget(self.choose_audio)
+        audio_row.addWidget(self.reset_audio)
+        audio_row.addStretch()
 
-        visual_controls = QWidget(); visual_row = QHBoxLayout(visual_controls); visual_row.setContentsMargins(0,0,0,0)
+        visual_controls = QWidget()
+        visual_row = QHBoxLayout(visual_controls)
+        visual_row.setContentsMargins(0, 0, 0, 0)
         self.choose_visual = QPushButton("Choose Default Visual…")
         self.reset_visual = QPushButton("Use Generated Visual")
-        visual_row.addWidget(self.choose_visual); visual_row.addWidget(self.reset_visual); visual_row.addStretch()
+        visual_row.addWidget(self.choose_visual)
+        visual_row.addWidget(self.reset_visual)
+        visual_row.addStretch()
 
         defaults_form.addRow("Default Audio", self.audio_status)
         defaults_form.addRow("", audio_controls)
@@ -205,16 +215,24 @@ class SettingsPage(QWidget):
         # ---------- session behavior ----------
         session = QGroupBox("Session Behavior")
         session_form = QFormLayout(session)
-        self.ritual_seconds = QSpinBox(); self.ritual_seconds.setRange(0, 30); self.ritual_seconds.setSuffix(" sec")
-        self.volume = QSpinBox(); self.volume.setRange(0, 100); self.volume.setSuffix("%")
+        self.ritual_seconds = QSpinBox()
+        self.ritual_seconds.setRange(0, 30)
+        self.ritual_seconds.setSuffix(" sec")
+        self.volume = QSpinBox()
+        self.volume.setRange(0, 100)
+        self.volume.setSuffix("%")
         session_form.addRow("Session Start Delay", self.ritual_seconds)
         session_form.addRow("Default Audio Volume", self.volume)
 
         # ---------- inactivity ----------
         idle = QGroupBox("Inactivity Check")
         idle_form = QFormLayout(idle)
-        self.idle_enabled = QCheckBox("Ask whether the session should continue after prolonged inactivity")
-        self.idle_minutes = QSpinBox(); self.idle_minutes.setRange(1, 180); self.idle_minutes.setSuffix(" min")
+        self.idle_enabled = QCheckBox(
+            "Ask whether the session should continue after prolonged inactivity"
+        )
+        self.idle_minutes = QSpinBox()
+        self.idle_minutes.setRange(1, 180)
+        self.idle_minutes.setSuffix(" min")
         idle_form.addRow("", self.idle_enabled)
         idle_form.addRow("Prompt After", self.idle_minutes)
 
@@ -236,18 +254,31 @@ class SettingsPage(QWidget):
         visual_group = QGroupBox("Visual Companion")
         visual_form = QFormLayout(visual_group)
         self.visual_enabled = QCheckBox("Enable Visual Companion")
-        self.visual_width = StableSpinBox(); self.visual_width.setRange(120, 2200); self.visual_width.setSuffix(" px")
-        self.visual_height = StableSpinBox(); self.visual_height.setRange(90, 1600); self.visual_height.setSuffix(" px")
+        self.visual_width = StableSpinBox()
+        self.visual_width.setRange(120, 2200)
+        self.visual_width.setSuffix(" px")
+        self.visual_height = StableSpinBox()
+        self.visual_height.setRange(90, 1600)
+        self.visual_height.setSuffix(" px")
         self.visual_lock = QCheckBox("Lock to Visual Aspect Ratio")
-        self.visual_opacity = StableSpinBox(); self.visual_opacity.setRange(35, 100); self.visual_opacity.setSuffix("%")
+        self.visual_opacity = StableSpinBox()
+        self.visual_opacity.setRange(35, 100)
+        self.visual_opacity.setSuffix("%")
         self.visual_fit = QComboBox()
         self.visual_fit.addItem("Contain — Show Entire Visual", "contain")
         self.visual_fit.addItem("Cover — Fill and Crop", "cover")
         self.visual_fit.addItem("Stretch — Fill Exactly", "stretch")
-        self.visual_zoom = StableSpinBox(); self.visual_zoom.setRange(100, 400); self.visual_zoom.setSuffix("%")
-        self.visual_pan_x = StableSpinBox(); self.visual_pan_x.setRange(-100, 100); self.visual_pan_x.setSuffix("%")
-        self.visual_pan_y = StableSpinBox(); self.visual_pan_y.setRange(-100, 100); self.visual_pan_y.setSuffix("%")
-        self.visual_framing_status = QLabel(""); self.visual_framing_status.setObjectName("Muted")
+        self.visual_zoom = StableSpinBox()
+        self.visual_zoom.setRange(100, 400)
+        self.visual_zoom.setSuffix("%")
+        self.visual_pan_x = StableSpinBox()
+        self.visual_pan_x.setRange(-100, 100)
+        self.visual_pan_x.setSuffix("%")
+        self.visual_pan_y = StableSpinBox()
+        self.visual_pan_y.setRange(-100, 100)
+        self.visual_pan_y.setSuffix("%")
+        self.visual_framing_status = QLabel("")
+        self.visual_framing_status.setObjectName("Muted")
         self.reset_visual_framing = QPushButton("Reset Visual Framing")
         visual_form.addRow("", self.visual_enabled)
         visual_form.addRow("Width", self.visual_width)
@@ -258,10 +289,16 @@ class SettingsPage(QWidget):
         visual_form.addRow("Crop Zoom", self.visual_zoom)
         visual_form.addRow("Horizontal Crop", self.visual_pan_x)
         visual_form.addRow("Vertical Crop", self.visual_pan_y)
-        framing_row = QHBoxLayout(); framing_row.addWidget(self.visual_framing_status); framing_row.addStretch(); framing_row.addWidget(self.reset_visual_framing)
+        framing_row = QHBoxLayout()
+        framing_row.addWidget(self.visual_framing_status)
+        framing_row.addStretch()
+        framing_row.addWidget(self.reset_visual_framing)
         visual_form.addRow("", framing_row)
-        visual_note = QLabel("Framing is saved per visual resource, so portrait videos and widescreen visuals can use different crops. Double-click the live visual companion to return to the main window.")
-        visual_note.setWordWrap(True); visual_note.setObjectName("Muted")
+        visual_note = QLabel(
+            "Framing is saved per visual resource, so portrait videos and widescreen visuals can use different crops. Double-click the live visual companion to return to the main window."
+        )
+        visual_note.setWordWrap(True)
+        visual_note.setObjectName("Muted")
         visual_form.addRow("", visual_note)
         self.visual_preview = VisualCompanionPreview(store)
         visual_form.addRow("Live Preview", self.visual_preview)
@@ -269,13 +306,27 @@ class SettingsPage(QWidget):
         control_group = QGroupBox("Control Companion")
         control_form = QFormLayout(control_group)
         self.control_enabled = QCheckBox("Enable Control Companion")
-        self.control_width = StableSpinBox(); self.control_width.setRange(150, 1800); self.control_width.setSuffix(" px")
-        self.control_opacity = StableSpinBox(); self.control_opacity.setRange(35, 100); self.control_opacity.setSuffix("%")
-        self.control_clock_size = StableSpinBox(); self.control_clock_size.setRange(12, 120); self.control_clock_size.setSuffix(" px")
-        self.control_button_size = StableSpinBox(); self.control_button_size.setRange(7, 32); self.control_button_size.setSuffix(" px")
-        self.control_button_height = StableSpinBox(); self.control_button_height.setRange(20, 80); self.control_button_height.setSuffix(" px")
-        self.control_padding = StableSpinBox(); self.control_padding.setRange(0, 30); self.control_padding.setSuffix(" px")
-        self.control_spacing = StableSpinBox(); self.control_spacing.setRange(0, 20); self.control_spacing.setSuffix(" px")
+        self.control_width = StableSpinBox()
+        self.control_width.setRange(150, 1800)
+        self.control_width.setSuffix(" px")
+        self.control_opacity = StableSpinBox()
+        self.control_opacity.setRange(35, 100)
+        self.control_opacity.setSuffix("%")
+        self.control_clock_size = StableSpinBox()
+        self.control_clock_size.setRange(12, 120)
+        self.control_clock_size.setSuffix(" px")
+        self.control_button_size = StableSpinBox()
+        self.control_button_size.setRange(7, 32)
+        self.control_button_size.setSuffix(" px")
+        self.control_button_height = StableSpinBox()
+        self.control_button_height.setRange(20, 80)
+        self.control_button_height.setSuffix(" px")
+        self.control_padding = StableSpinBox()
+        self.control_padding.setRange(0, 30)
+        self.control_padding.setSuffix(" px")
+        self.control_spacing = StableSpinBox()
+        self.control_spacing.setRange(0, 20)
+        self.control_spacing.setSuffix(" px")
         control_form.addRow("", self.control_enabled)
         control_form.addRow("Width", self.control_width)
         control_form.addRow("Opacity", self.control_opacity)
@@ -294,7 +345,17 @@ class SettingsPage(QWidget):
         self.show_main = QCheckBox("Main Window")
         self.show_finish = QCheckBox("Finish Session")
         self.show_customize = QCheckBox("Customize")
-        for i, widget in enumerate((self.show_timer, self.show_status, self.show_pause, self.show_adjust, self.show_main, self.show_finish, self.show_customize)):
+        for i, widget in enumerate(
+            (
+                self.show_timer,
+                self.show_status,
+                self.show_pause,
+                self.show_adjust,
+                self.show_main,
+                self.show_finish,
+                self.show_customize,
+            )
+        ):
             visible_grid.addWidget(widget, i // 2, i % 2)
         control_form.addRow("", visible)
         self.control_preview = ControlCompanionPreview()
@@ -308,19 +369,26 @@ class SettingsPage(QWidget):
             "The two windows are independent. Disable either one, or disable both if you do not want a Floating Companion. "
             "Changes below are previewed immediately but are saved only when you press Save Companion Configuration or Save Settings."
         )
-        companion_note.setWordWrap(True); companion_note.setObjectName("Muted")
+        companion_note.setWordWrap(True)
+        companion_note.setObjectName("Muted")
         companion_root.addWidget(companion_note)
 
         companion_save_row = QHBoxLayout()
-        self.companion_saved = QLabel(""); self.companion_saved.setObjectName("Muted")
-        self.save_companion = QPushButton("Save Companion Configuration"); self.save_companion.setObjectName("Warm")
-        companion_save_row.addWidget(self.companion_saved); companion_save_row.addStretch(); companion_save_row.addWidget(self.save_companion)
+        self.companion_saved = QLabel("")
+        self.companion_saved.setObjectName("Muted")
+        self.save_companion = QPushButton("Save Companion Configuration")
+        self.save_companion.setObjectName("Warm")
+        companion_save_row.addWidget(self.companion_saved)
+        companion_save_row.addStretch()
+        companion_save_row.addWidget(self.save_companion)
         companion_root.addLayout(companion_save_row)
 
         # ---------- resources ----------
         library = QGroupBox("Resource Library")
         library_layout = QHBoxLayout(library)
-        library_text = QLabel("Files placed inside the resources folder are detected automatically. Run a manual scan when you want immediate reconciliation.")
+        library_text = QLabel(
+            "Files placed inside the resources folder are detected automatically. Run a manual scan when you want immediate reconciliation."
+        )
         library_text.setWordWrap(True)
         self.scan_resources = QPushButton("Scan Resource Library")
         self.open_resources = QPushButton("Open Resource Library Folder")
@@ -328,9 +396,14 @@ class SettingsPage(QWidget):
         library_layout.addWidget(self.scan_resources)
         library_layout.addWidget(self.open_resources)
 
-        self.saved_label = QLabel(""); self.saved_label.setObjectName("Muted")
-        self.save_button = QPushButton("Save Settings"); self.save_button.setObjectName("Primary")
-        save_row = QHBoxLayout(); save_row.addWidget(self.saved_label); save_row.addStretch(); save_row.addWidget(self.save_button)
+        self.saved_label = QLabel("")
+        self.saved_label.setObjectName("Muted")
+        self.save_button = QPushButton("Save Settings")
+        self.save_button.setObjectName("Primary")
+        save_row = QHBoxLayout()
+        save_row.addWidget(self.saved_label)
+        save_row.addStretch()
+        save_row.addWidget(self.save_button)
 
         for group in (appearance, defaults, session, idle, companion, library):
             root.addWidget(group)
@@ -362,17 +435,29 @@ class SettingsPage(QWidget):
             widget.editingFinished.connect(self._save_visual_framing)
 
         companion_widgets = [
-            self.visual_width, self.visual_height, self.visual_opacity,
-            self.control_width, self.control_opacity, self.control_clock_size,
-            self.control_button_size, self.control_button_height,
-            self.control_padding, self.control_spacing,
+            self.visual_width,
+            self.visual_height,
+            self.visual_opacity,
+            self.control_width,
+            self.control_opacity,
+            self.control_clock_size,
+            self.control_button_size,
+            self.control_button_height,
+            self.control_padding,
+            self.control_spacing,
         ]
         for widget in companion_widgets:
             widget.valueChanged.connect(self._update_companion_preview)
         for widget in (
-            self.visual_enabled, self.control_enabled,
-            self.show_timer, self.show_status, self.show_pause, self.show_adjust,
-            self.show_main, self.show_finish, self.show_customize,
+            self.visual_enabled,
+            self.control_enabled,
+            self.show_timer,
+            self.show_status,
+            self.show_pause,
+            self.show_adjust,
+            self.show_main,
+            self.show_finish,
+            self.show_customize,
         ):
             widget.toggled.connect(self._update_companion_preview)
         self.visual_lock.toggled.connect(self._visual_lock_changed)
@@ -506,9 +591,17 @@ class SettingsPage(QWidget):
         self.visual_pan_x.setValue(int(framing.get("pan_x", 0)))
         self.visual_pan_y.setValue(int(framing.get("pan_y", 0)))
         enabled = self._current_visual_id is not None
-        for widget in (self.visual_fit, self.visual_zoom, self.visual_pan_x, self.visual_pan_y, self.reset_visual_framing):
+        for widget in (
+            self.visual_fit,
+            self.visual_zoom,
+            self.visual_pan_x,
+            self.visual_pan_y,
+            self.reset_visual_framing,
+        ):
             widget.setEnabled(enabled)
-        self.visual_framing_status.setText("" if enabled else "Select a preset with a visual to edit framing")
+        self.visual_framing_status.setText(
+            "" if enabled else "Select a preset with a visual to edit framing"
+        )
         self._loading_visual_framing = False
 
     def _save_visual_framing(self, *args) -> None:
@@ -542,20 +635,30 @@ class SettingsPage(QWidget):
         pixmap = QPixmap(str(self.store.current_icon_path()))
         if not pixmap.isNull():
             self.icon_preview.setPixmap(
-                pixmap.scaled(self.icon_preview.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                pixmap.scaled(
+                    self.icon_preview.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
             )
         custom_icon = self.store._resolve_setting_path("custom_icon_path")
         self.reset_icon.setEnabled(custom_icon is not None)
         audio_custom = self.store._resolve_setting_path("default_audio_path")
         visual_custom = self.store._resolve_setting_path("default_visual_path")
-        self.audio_status.setText(f"Custom: {audio_custom.name}" if audio_custom else "Generated fallback ambience")
-        self.visual_status.setText(f"Custom: {visual_custom.name}" if visual_custom else "Generated fallback visual")
+        self.audio_status.setText(
+            f"Custom: {audio_custom.name}" if audio_custom else "Generated fallback ambience"
+        )
+        self.visual_status.setText(
+            f"Custom: {visual_custom.name}" if visual_custom else "Generated fallback visual"
+        )
         self.reset_audio.setEnabled(audio_custom is not None)
         self.reset_visual.setEnabled(visual_custom is not None)
         self._preview_preset_changed()
 
     def _choose_icon(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Choose Application Icon", "", "Images (*.png *.jpg *.jpeg *.bmp *.webp)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Choose Application Icon", "", "Images (*.png *.jpg *.jpeg *.bmp *.webp)"
+        )
         if path:
             try:
                 self.store.set_custom_icon(Path(path))
@@ -563,7 +666,9 @@ class SettingsPage(QWidget):
                 QMessageBox.warning(self, "Icon Update Failed", str(exc))
 
     def _choose_audio(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Choose Default Audio", "", "Audio (*.mp3 *.wav *.ogg *.flac *.m4a *.aac)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Choose Default Audio", "", "Audio (*.mp3 *.wav *.ogg *.flac *.m4a *.aac)"
+        )
         if path:
             try:
                 self.store.set_default_audio(Path(path))

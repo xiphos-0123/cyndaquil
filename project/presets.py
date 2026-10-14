@@ -4,9 +4,20 @@ from copy import deepcopy
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
-    QWidget
+    QCheckBox,
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
 
 from .store import Store
@@ -31,7 +42,9 @@ class PresetsPage(QWidget):
 
         title = QLabel("Focus Presets")
         title.setObjectName("SectionTitle")
-        description = QLabel("Save reusable combinations of session mode, audio, and visual ambience.")
+        description = QLabel(
+            "Save reusable combinations of session mode, audio, and visual ambience."
+        )
         description.setWordWrap(True)
         description.setObjectName("Muted")
 
@@ -236,11 +249,7 @@ class PresetsPage(QWidget):
         if not self.current_id:
             return
 
-        music = [
-            rid
-            for rid, box in self.music_boxes.items()
-            if box.isChecked()
-        ]
+        music = [rid for rid, box in self.music_boxes.items() if box.isChecked()]
 
         preset = {
             "id": self.current_id,
@@ -303,11 +312,14 @@ class PresetsPage(QWidget):
         if not preset:
             return
 
-        if QMessageBox.question(
-            self,
-            "Delete Preset",
-            f"Delete “{preset.get('name', 'Preset')}”?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        ) == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(
+                self,
+                "Delete Preset",
+                f"Delete “{preset.get('name', 'Preset')}”?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            == QMessageBox.StandardButton.Yes
+        ):
             self.current_id = "default"
             self.store.delete_preset(preset.get("id"))

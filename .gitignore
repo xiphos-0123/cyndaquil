@@ -1,1 +1,8 @@
-resources
+# User media and local runtime output. Existing tracked records are retained.
+/resources/
+/.cyndaquil/
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/

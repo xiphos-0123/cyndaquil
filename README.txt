@@ -260,11 +260,15 @@ silently replacing it with empty records. Close Cyndaquil, copy the complete
 .bak backup. Restore a verified backup manually only after preserving both files.
 
 Code responsibilities:
-- main.py: main window and application lifecycle
+- app.py: application startup and Qt initialization
+- main.py: main window and session coordination
+- navigation.py: sidebar, version display, and direct History/Statistics routes
 - ui_helpers.py: shared input behavior and completion dialog
 - instance.py: single-instance lock and activation
 - persistence.py: validated JSON reads, atomic writes, and rolling backups
-- store.py: settings, resource, preset, and history operations
+- store.py: settings, resources, presets, and Qt notification facade
+- session_repository.py: transactional history and tag operations
+- statistics_view.py / history_analytics.py: statistics UI and reporting calculations
 - session.py: timing and session state
 - remaining page/media modules: their respective UI and media responsibilities
 
@@ -284,15 +288,31 @@ legacy records remain available in All time. Reset filters restores all records.
 
 Add comma-separated tags when completing a session or editing a Session Entry.
 Existing tags can be selected from the suggestions list. To label older records
-in bulk, select rows with Ctrl/Shift and choose Tag selected... to add or remove
-tags. Bulk tagging leaves notes, timestamps, focused time, and other fields intact.
+in bulk, select rows with Ctrl/Shift, then right-click and choose Edit tags for
+selected sessions... to add or remove tags. Bulk tagging leaves notes, timestamps, focused time, and other fields intact.
 
 The tag filter includes or excludes sessions matching ANY entered tag, ignoring
 case. It applies to both History views. Date filters affect Session History;
 Statistics retains its own reporting windows within the selected tag group.
 Filtering does not edit or delete records. Old sessions without tags work as before.
 
-Completion note previews retain line breaks; select a record to read the full
-note in the reading pane. Show timing details reveals the additional columns.
+Completion notes are shown only in the selected-record reading pane, preserving
+line breaks. The table keeps centered session details without a note column. Show timing details reveals the additional columns.
 Distraction Dump is collapsed by default in the Session Entry editor and can be
 expanded without changing its saved contents.
+
+UPDATING AND IDENTIFYING THE RUNNING APP
+--------------------------------------
+Version 5.1.0 appears at the bottom of the sidebar. Session History and Statistics
+are separate sidebar destinations. About Cyndaquil shows both the running version
+and the application/data folders so you can confirm which copy is running.
+
+After pulling an update, fully quit Cyndaquil using Quit Cyndaquil (save an active
+session first), then launch Cyndaquil.pyw from the folder you updated. Closing the
+window can leave the app running in the tray. To launch that exact file from its
+folder in a Windows terminal, run:
+    py -3 Cyndaquil.pyw
+
+Generated Python caches are no longer committed. User media and new runtime files
+are ignored by Git; previously tracked .cyndaquil records and backups are retained.
+Developer architecture and check commands are in docs/DEVELOPMENT.md.

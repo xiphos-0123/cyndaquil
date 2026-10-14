@@ -1,6 +1,9 @@
 """Single-process coordination, independent of window construction."""
+
 from __future__ import annotations
+
 from pathlib import Path
+
 from PySide6.QtCore import QLockFile, QStandardPaths
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QWidget
@@ -50,9 +53,7 @@ class SingleInstanceGuard:
         self.server = QLocalServer(window)
 
         if self.server.listen(self.SERVER_NAME):
-            self.server.newConnection.connect(
-                lambda: self._incoming(window)
-            )
+            self.server.newConnection.connect(lambda: self._incoming(window))
 
     def _incoming(self, window: QWidget) -> None:
         if not self.server:
@@ -65,5 +66,3 @@ class SingleInstanceGuard:
             socket.disconnectFromServer()
 
         window.restore_main()
-
-

@@ -11,9 +11,21 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QImage, QLinearGradient, QPainter, QPainterPath, QPen
 
-
 AUDIO_EXTS = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac"}
-VISUAL_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".gif", ".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v"}
+VISUAL_EXTS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".webp",
+    ".gif",
+    ".mp4",
+    ".mkv",
+    ".mov",
+    ".avi",
+    ".webm",
+    ".m4v",
+}
 
 
 def hide_folder_windows(path: Path) -> None:
@@ -187,7 +199,9 @@ def ensure_system_assets(data_dir: Path) -> dict[str, Path]:
     return {"icon": icon, "visual": visual, "audio": audio}
 
 
-def replace_managed_asset(source: Path, destination_dir: Path, stem: str, allowed_exts: set[str]) -> Path:
+def replace_managed_asset(
+    source: Path, destination_dir: Path, stem: str, allowed_exts: set[str]
+) -> Path:
     source = Path(source).resolve()
     if source.suffix.lower() not in allowed_exts:
         raise ValueError(f"Unsupported file type: {source.suffix}")

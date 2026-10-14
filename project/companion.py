@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
-    QFrame,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -23,11 +22,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .defaults import DEFAULT_SETTINGS
 from .media import MediaVisual
 from .session import SessionManager
-from .store import DEFAULT_SETTINGS, Store
+from .store import Store
 from .utils import format_seconds
-
 
 VISUAL_KEYS = (
     "visual_companion_enabled",
@@ -76,11 +75,49 @@ class VisualCompanionConfig:
     @classmethod
     def from_mapping(cls, mapping: dict) -> "VisualCompanionConfig":
         return cls(
-            enabled=bool(mapping.get("visual_companion_enabled", DEFAULT_SETTINGS["visual_companion_enabled"])),
-            width=max(120, min(2200, int(mapping.get("visual_companion_width", DEFAULT_SETTINGS["visual_companion_width"])))),
-            height=max(90, min(1600, int(mapping.get("visual_companion_height", DEFAULT_SETTINGS["visual_companion_height"])))),
-            lock_aspect=bool(mapping.get("visual_companion_lock_aspect", DEFAULT_SETTINGS["visual_companion_lock_aspect"])),
-            opacity=max(35, min(100, int(mapping.get("visual_companion_opacity", DEFAULT_SETTINGS["visual_companion_opacity"])))),
+            enabled=bool(
+                mapping.get(
+                    "visual_companion_enabled", DEFAULT_SETTINGS["visual_companion_enabled"]
+                )
+            ),
+            width=max(
+                120,
+                min(
+                    2200,
+                    int(
+                        mapping.get(
+                            "visual_companion_width", DEFAULT_SETTINGS["visual_companion_width"]
+                        )
+                    ),
+                ),
+            ),
+            height=max(
+                90,
+                min(
+                    1600,
+                    int(
+                        mapping.get(
+                            "visual_companion_height", DEFAULT_SETTINGS["visual_companion_height"]
+                        )
+                    ),
+                ),
+            ),
+            lock_aspect=bool(
+                mapping.get(
+                    "visual_companion_lock_aspect", DEFAULT_SETTINGS["visual_companion_lock_aspect"]
+                )
+            ),
+            opacity=max(
+                35,
+                min(
+                    100,
+                    int(
+                        mapping.get(
+                            "visual_companion_opacity", DEFAULT_SETTINGS["visual_companion_opacity"]
+                        )
+                    ),
+                ),
+            ),
         )
 
     def to_dict(self) -> dict:
@@ -114,21 +151,133 @@ class ControlCompanionConfig:
     @classmethod
     def from_mapping(cls, mapping: dict) -> "ControlCompanionConfig":
         return cls(
-            enabled=bool(mapping.get("control_companion_enabled", DEFAULT_SETTINGS["control_companion_enabled"])),
-            width=max(150, min(1800, int(mapping.get("control_companion_width", DEFAULT_SETTINGS["control_companion_width"])))),
-            opacity=max(35, min(100, int(mapping.get("control_companion_opacity", DEFAULT_SETTINGS["control_companion_opacity"])))),
-            clock_size=max(12, min(120, int(mapping.get("control_companion_clock_size", DEFAULT_SETTINGS["control_companion_clock_size"])))),
-            button_size=max(7, min(32, int(mapping.get("control_companion_button_size", DEFAULT_SETTINGS["control_companion_button_size"])))),
-            button_height=max(20, min(80, int(mapping.get("control_companion_button_height", DEFAULT_SETTINGS["control_companion_button_height"])))),
-            padding=max(0, min(30, int(mapping.get("control_companion_padding", DEFAULT_SETTINGS["control_companion_padding"])))),
-            spacing=max(0, min(20, int(mapping.get("control_companion_spacing", DEFAULT_SETTINGS["control_companion_spacing"])))),
-            show_timer=bool(mapping.get("control_companion_show_timer", DEFAULT_SETTINGS["control_companion_show_timer"])),
-            show_status=bool(mapping.get("control_companion_show_status", DEFAULT_SETTINGS["control_companion_show_status"])),
-            show_pause=bool(mapping.get("control_companion_show_pause", DEFAULT_SETTINGS["control_companion_show_pause"])),
-            show_adjust=bool(mapping.get("control_companion_show_adjust", DEFAULT_SETTINGS["control_companion_show_adjust"])),
-            show_main=bool(mapping.get("control_companion_show_main", DEFAULT_SETTINGS["control_companion_show_main"])),
-            show_finish=bool(mapping.get("control_companion_show_finish", DEFAULT_SETTINGS["control_companion_show_finish"])),
-            show_customize=bool(mapping.get("control_companion_show_customize", DEFAULT_SETTINGS["control_companion_show_customize"])),
+            enabled=bool(
+                mapping.get(
+                    "control_companion_enabled", DEFAULT_SETTINGS["control_companion_enabled"]
+                )
+            ),
+            width=max(
+                150,
+                min(
+                    1800,
+                    int(
+                        mapping.get(
+                            "control_companion_width", DEFAULT_SETTINGS["control_companion_width"]
+                        )
+                    ),
+                ),
+            ),
+            opacity=max(
+                35,
+                min(
+                    100,
+                    int(
+                        mapping.get(
+                            "control_companion_opacity",
+                            DEFAULT_SETTINGS["control_companion_opacity"],
+                        )
+                    ),
+                ),
+            ),
+            clock_size=max(
+                12,
+                min(
+                    120,
+                    int(
+                        mapping.get(
+                            "control_companion_clock_size",
+                            DEFAULT_SETTINGS["control_companion_clock_size"],
+                        )
+                    ),
+                ),
+            ),
+            button_size=max(
+                7,
+                min(
+                    32,
+                    int(
+                        mapping.get(
+                            "control_companion_button_size",
+                            DEFAULT_SETTINGS["control_companion_button_size"],
+                        )
+                    ),
+                ),
+            ),
+            button_height=max(
+                20,
+                min(
+                    80,
+                    int(
+                        mapping.get(
+                            "control_companion_button_height",
+                            DEFAULT_SETTINGS["control_companion_button_height"],
+                        )
+                    ),
+                ),
+            ),
+            padding=max(
+                0,
+                min(
+                    30,
+                    int(
+                        mapping.get(
+                            "control_companion_padding",
+                            DEFAULT_SETTINGS["control_companion_padding"],
+                        )
+                    ),
+                ),
+            ),
+            spacing=max(
+                0,
+                min(
+                    20,
+                    int(
+                        mapping.get(
+                            "control_companion_spacing",
+                            DEFAULT_SETTINGS["control_companion_spacing"],
+                        )
+                    ),
+                ),
+            ),
+            show_timer=bool(
+                mapping.get(
+                    "control_companion_show_timer", DEFAULT_SETTINGS["control_companion_show_timer"]
+                )
+            ),
+            show_status=bool(
+                mapping.get(
+                    "control_companion_show_status",
+                    DEFAULT_SETTINGS["control_companion_show_status"],
+                )
+            ),
+            show_pause=bool(
+                mapping.get(
+                    "control_companion_show_pause", DEFAULT_SETTINGS["control_companion_show_pause"]
+                )
+            ),
+            show_adjust=bool(
+                mapping.get(
+                    "control_companion_show_adjust",
+                    DEFAULT_SETTINGS["control_companion_show_adjust"],
+                )
+            ),
+            show_main=bool(
+                mapping.get(
+                    "control_companion_show_main", DEFAULT_SETTINGS["control_companion_show_main"]
+                )
+            ),
+            show_finish=bool(
+                mapping.get(
+                    "control_companion_show_finish",
+                    DEFAULT_SETTINGS["control_companion_show_finish"],
+                )
+            ),
+            show_customize=bool(
+                mapping.get(
+                    "control_companion_show_customize",
+                    DEFAULT_SETTINGS["control_companion_show_customize"],
+                )
+            ),
         )
 
     def to_dict(self) -> dict:
@@ -151,15 +300,17 @@ class ControlCompanionConfig:
         }
 
     def any_content(self) -> bool:
-        return any((
-            self.show_timer,
-            self.show_status,
-            self.show_pause,
-            self.show_adjust,
-            self.show_main,
-            self.show_finish,
-            self.show_customize,
-        ))
+        return any(
+            (
+                self.show_timer,
+                self.show_status,
+                self.show_pause,
+                self.show_adjust,
+                self.show_main,
+                self.show_finish,
+                self.show_customize,
+            )
+        )
 
 
 def companion_configs(mapping: dict) -> tuple[VisualCompanionConfig, ControlCompanionConfig]:
@@ -271,7 +422,9 @@ class VisualCompanionWindow(DraggableToolWindow):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        self.grip.move(max(0, self.width() - self.grip.width()), max(0, self.height() - self.grip.height()))
+        self.grip.move(
+            max(0, self.width() - self.grip.width()), max(0, self.height() - self.grip.height())
+        )
 
         if self._aspect_adjusting or not self._config.lock_aspect or self._source_ratio <= 0:
             return
@@ -388,9 +541,7 @@ class ControlCompanionWindow(DraggableToolWindow):
         for _, button in self._button_specs:
             button.setMinimumHeight(config.button_height)
             button.setMaximumHeight(config.button_height)
-            button.setStyleSheet(
-                f"font-size:{config.button_size}px; padding:2px 5px;"
-            )
+            button.setStyleSheet(f"font-size:{config.button_size}px; padding:2px 5px;")
 
         if resize_window:
             self.resize(config.width, self.sizeHint().height())
@@ -415,7 +566,9 @@ class ControlCompanionWindow(DraggableToolWindow):
     def _refresh_button_labels(self) -> None:
         visible = [button for _, button in self._button_specs if not button.isHidden()]
         count = max(1, len(visible))
-        usable = max(1, self.width() - self._config.padding * 2 - self._config.spacing * (count - 1))
+        usable = max(
+            1, self.width() - self._config.padding * 2 - self._config.spacing * (count - 1)
+        )
         per_button = usable / count
         running = self.session.state == "running"
 
@@ -461,12 +614,20 @@ class ControlCompanionWindow(DraggableToolWindow):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        self.grip.move(max(0, self.width() - self.grip.width()), max(0, self.height() - self.grip.height()))
+        self.grip.move(
+            max(0, self.width() - self.grip.width()), max(0, self.height() - self.grip.height())
+        )
         self._refresh_button_labels()
 
 
 class CompanionSettingsDialog(QDialog):
-    def __init__(self, store: Store, visual: VisualCompanionWindow | None, control: ControlCompanionWindow | None, parent=None):
+    def __init__(
+        self,
+        store: Store,
+        visual: VisualCompanionWindow | None,
+        control: ControlCompanionWindow | None,
+        parent=None,
+    ):
         super().__init__(parent)
         self.store = store
         self.visual_window = visual
@@ -483,10 +644,20 @@ class CompanionSettingsDialog(QDialog):
         visual_form = QFormLayout(visual_group)
         self.visual_enabled = QCheckBox("Enable Visual Companion")
         self.visual_enabled.setChecked(visual_cfg.enabled)
-        self.visual_width = StableSpinBox(); self.visual_width.setRange(120, 2200); self.visual_width.setValue(visual_cfg.width); self.visual_width.setSuffix(" px")
-        self.visual_height = StableSpinBox(); self.visual_height.setRange(90, 1600); self.visual_height.setValue(visual_cfg.height); self.visual_height.setSuffix(" px")
-        self.visual_lock = QCheckBox("Lock to Visual Aspect Ratio"); self.visual_lock.setChecked(visual_cfg.lock_aspect)
-        self.visual_opacity = StableSpinBox(); self.visual_opacity.setRange(35, 100); self.visual_opacity.setValue(visual_cfg.opacity); self.visual_opacity.setSuffix("%")
+        self.visual_width = StableSpinBox()
+        self.visual_width.setRange(120, 2200)
+        self.visual_width.setValue(visual_cfg.width)
+        self.visual_width.setSuffix(" px")
+        self.visual_height = StableSpinBox()
+        self.visual_height.setRange(90, 1600)
+        self.visual_height.setValue(visual_cfg.height)
+        self.visual_height.setSuffix(" px")
+        self.visual_lock = QCheckBox("Lock to Visual Aspect Ratio")
+        self.visual_lock.setChecked(visual_cfg.lock_aspect)
+        self.visual_opacity = StableSpinBox()
+        self.visual_opacity.setRange(35, 100)
+        self.visual_opacity.setValue(visual_cfg.opacity)
+        self.visual_opacity.setSuffix("%")
         visual_form.addRow("", self.visual_enabled)
         visual_form.addRow("Width", self.visual_width)
         visual_form.addRow("Height", self.visual_height)
@@ -494,20 +665,45 @@ class CompanionSettingsDialog(QDialog):
         self.visual_height.setEnabled(not visual_cfg.lock_aspect)
         self.visual_lock.toggled.connect(lambda checked: self.visual_height.setEnabled(not checked))
         visual_form.addRow("Opacity", self.visual_opacity)
-        visual_note = QLabel("The visual is its own window. Double-click it to return to the main Cyndaquil window.")
-        visual_note.setWordWrap(True); visual_note.setObjectName("Muted")
+        visual_note = QLabel(
+            "The visual is its own window. Double-click it to return to the main Cyndaquil window."
+        )
+        visual_note.setWordWrap(True)
+        visual_note.setObjectName("Muted")
         visual_form.addRow("", visual_note)
 
         control_group = QGroupBox("Control Companion")
         control_form = QFormLayout(control_group)
-        self.control_enabled = QCheckBox("Enable Control Companion"); self.control_enabled.setChecked(control_cfg.enabled)
-        self.control_width = StableSpinBox(); self.control_width.setRange(150, 1800); self.control_width.setValue(control_cfg.width); self.control_width.setSuffix(" px")
-        self.control_opacity = StableSpinBox(); self.control_opacity.setRange(35, 100); self.control_opacity.setValue(control_cfg.opacity); self.control_opacity.setSuffix("%")
-        self.clock_size = StableSpinBox(); self.clock_size.setRange(12, 120); self.clock_size.setValue(control_cfg.clock_size); self.clock_size.setSuffix(" px")
-        self.button_size = StableSpinBox(); self.button_size.setRange(7, 32); self.button_size.setValue(control_cfg.button_size); self.button_size.setSuffix(" px")
-        self.button_height = StableSpinBox(); self.button_height.setRange(20, 80); self.button_height.setValue(control_cfg.button_height); self.button_height.setSuffix(" px")
-        self.padding = StableSpinBox(); self.padding.setRange(0, 30); self.padding.setValue(control_cfg.padding); self.padding.setSuffix(" px")
-        self.spacing = StableSpinBox(); self.spacing.setRange(0, 20); self.spacing.setValue(control_cfg.spacing); self.spacing.setSuffix(" px")
+        self.control_enabled = QCheckBox("Enable Control Companion")
+        self.control_enabled.setChecked(control_cfg.enabled)
+        self.control_width = StableSpinBox()
+        self.control_width.setRange(150, 1800)
+        self.control_width.setValue(control_cfg.width)
+        self.control_width.setSuffix(" px")
+        self.control_opacity = StableSpinBox()
+        self.control_opacity.setRange(35, 100)
+        self.control_opacity.setValue(control_cfg.opacity)
+        self.control_opacity.setSuffix("%")
+        self.clock_size = StableSpinBox()
+        self.clock_size.setRange(12, 120)
+        self.clock_size.setValue(control_cfg.clock_size)
+        self.clock_size.setSuffix(" px")
+        self.button_size = StableSpinBox()
+        self.button_size.setRange(7, 32)
+        self.button_size.setValue(control_cfg.button_size)
+        self.button_size.setSuffix(" px")
+        self.button_height = StableSpinBox()
+        self.button_height.setRange(20, 80)
+        self.button_height.setValue(control_cfg.button_height)
+        self.button_height.setSuffix(" px")
+        self.padding = StableSpinBox()
+        self.padding.setRange(0, 30)
+        self.padding.setValue(control_cfg.padding)
+        self.padding.setSuffix(" px")
+        self.spacing = StableSpinBox()
+        self.spacing.setRange(0, 20)
+        self.spacing.setValue(control_cfg.spacing)
+        self.spacing.setSuffix(" px")
         control_form.addRow("", self.control_enabled)
         control_form.addRow("Width", self.control_width)
         control_form.addRow("Opacity", self.control_opacity)
@@ -519,14 +715,31 @@ class CompanionSettingsDialog(QDialog):
 
         visible_group = QGroupBox("Visible Control Companion Items")
         visible_grid = QGridLayout(visible_group)
-        self.show_timer = QCheckBox("Timer"); self.show_timer.setChecked(control_cfg.show_timer)
-        self.show_status = QCheckBox("Session Status"); self.show_status.setChecked(control_cfg.show_status)
-        self.show_pause = QCheckBox("Pause / Resume"); self.show_pause.setChecked(control_cfg.show_pause)
-        self.show_adjust = QCheckBox("−1 / +1 Minute"); self.show_adjust.setChecked(control_cfg.show_adjust)
-        self.show_main = QCheckBox("Main Window"); self.show_main.setChecked(control_cfg.show_main)
-        self.show_finish = QCheckBox("Finish Session"); self.show_finish.setChecked(control_cfg.show_finish)
-        self.show_customize = QCheckBox("Customize"); self.show_customize.setChecked(control_cfg.show_customize)
-        for i, widget in enumerate((self.show_timer, self.show_status, self.show_pause, self.show_adjust, self.show_main, self.show_finish, self.show_customize)):
+        self.show_timer = QCheckBox("Timer")
+        self.show_timer.setChecked(control_cfg.show_timer)
+        self.show_status = QCheckBox("Session Status")
+        self.show_status.setChecked(control_cfg.show_status)
+        self.show_pause = QCheckBox("Pause / Resume")
+        self.show_pause.setChecked(control_cfg.show_pause)
+        self.show_adjust = QCheckBox("−1 / +1 Minute")
+        self.show_adjust.setChecked(control_cfg.show_adjust)
+        self.show_main = QCheckBox("Main Window")
+        self.show_main.setChecked(control_cfg.show_main)
+        self.show_finish = QCheckBox("Finish Session")
+        self.show_finish.setChecked(control_cfg.show_finish)
+        self.show_customize = QCheckBox("Customize")
+        self.show_customize.setChecked(control_cfg.show_customize)
+        for i, widget in enumerate(
+            (
+                self.show_timer,
+                self.show_status,
+                self.show_pause,
+                self.show_adjust,
+                self.show_main,
+                self.show_finish,
+                self.show_customize,
+            )
+        ):
             visible_grid.addWidget(widget, i // 2, i % 2)
         control_form.addRow("", visible_group)
 
@@ -534,7 +747,9 @@ class CompanionSettingsDialog(QDialog):
         columns.addWidget(control_group, 1)
         root.addLayout(columns)
 
-        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         root.addWidget(self.buttons)
@@ -617,7 +832,9 @@ class CompanionManager(QObject):
 
         if self.visual_window.isVisible() and not visual_cfg.enabled:
             self.visual_window.hide()
-        if self.control_window.isVisible() and (not control_cfg.enabled or not control_cfg.any_content()):
+        if self.control_window.isVisible() and (
+            not control_cfg.enabled or not control_cfg.any_content()
+        ):
             self.control_window.hide()
 
     def show(self) -> bool:
@@ -657,10 +874,16 @@ class CompanionManager(QObject):
         if self.visual_window.isVisible() and self.control_window.isVisible():
             total_w = self.visual_window.width() + 14 + self.control_window.width()
             x = area.center().x() - total_w // 2
-            y = area.center().y() - max(self.visual_window.height(), self.control_window.height()) // 2
+            y = (
+                area.center().y()
+                - max(self.visual_window.height(), self.control_window.height()) // 2
+            )
             self.visual_window.move(max(area.left(), x), max(area.top(), y))
             self.control_window.move(
-                min(area.right() - self.control_window.width(), self.visual_window.x() + self.visual_window.width() + 14),
+                min(
+                    area.right() - self.control_window.width(),
+                    self.visual_window.x() + self.visual_window.width() + 14,
+                ),
                 self.visual_window.y(),
             )
         elif self.visual_window.isVisible():
@@ -688,7 +911,9 @@ class CompanionManager(QObject):
 
     def open_customizer(self) -> None:
         parent = self.dialog_parent()
-        dialog = CompanionSettingsDialog(self.store, self.visual_window, self.control_window, parent)
+        dialog = CompanionSettingsDialog(
+            self.store, self.visual_window, self.control_window, parent
+        )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         self.store.update_settings(dialog.values())

@@ -6,7 +6,6 @@ import uuid
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
-
 AUDIO_EXTS = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
 GIF_EXTS = {".gif"}

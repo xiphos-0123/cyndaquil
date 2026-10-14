@@ -1,8 +1,18 @@
 """Shared input behavior and session completion dialog."""
-from .tag_editor import TagEditor
 
 from PySide6.QtCore import QEvent, QObject
-from PySide6.QtWidgets import (QAbstractScrollArea, QAbstractSpinBox, QComboBox, QDialog, QDialogButtonBox, QLabel, QPlainTextEdit, QVBoxLayout)
+from PySide6.QtWidgets import (
+    QAbstractScrollArea,
+    QAbstractSpinBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QPlainTextEdit,
+    QVBoxLayout,
+)
+
+from .tag_editor import TagEditor
 
 
 class WheelInputGuard(QObject):
@@ -54,9 +64,7 @@ class CompletionDialog(QDialog):
         title = QLabel("Session Completion")
         title.setObjectName("SectionTitle")
 
-        description = QLabel(
-            "Optionally record what was completed and the next action."
-        )
+        description = QLabel("Optionally record what was completed and the next action.")
         description.setObjectName("Muted")
 
         self.tags = TagEditor(initial_tags, available_tags)
@@ -104,5 +112,3 @@ class CompletionDialog(QDialog):
 
     def text(self) -> str:
         return self.note.toPlainText().strip()
-
-

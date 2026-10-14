@@ -4,14 +4,30 @@ from datetime import datetime
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QProgressBar,
-    QPushButton, QSlider, QSpinBox, QVBoxLayout, QWidget
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QProgressBar,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
 
 from .media import MediaVisual
 from .session import SessionManager
 from .store import Store
-from .utils import current_reporting_day, format_seconds, parse_iso_datetime, reporting_day_bounds, reporting_day_key
+from .utils import (
+    current_reporting_day,
+    format_seconds,
+    parse_iso_datetime,
+    reporting_day_bounds,
+    reporting_day_key,
+)
 
 
 class HomePage(QWidget):
@@ -63,7 +79,9 @@ class HomePage(QWidget):
 
         cap = QLabel("Session Setup")
         cap.setObjectName("SectionTitle")
-        intro = QLabel("Define one clear objective. Cyndaquil will keep the timer, ambience, and session controls together.")
+        intro = QLabel(
+            "Define one clear objective. Cyndaquil will keep the timer, ambience, and session controls together."
+        )
         intro.setWordWrap(True)
         intro.setObjectName("Muted")
 
@@ -155,9 +173,7 @@ class HomePage(QWidget):
         shortcut_title = QLabel("Session Shortcuts")
         shortcut_title.setObjectName("SectionTitle")
         shortcut_text = QLabel(
-            "Space — Pause / Resume\n"
-            "Ctrl + N — Work Note\n"
-            "Ctrl + D — Distraction Dump\n"
+            "Space — Pause / Resume\nCtrl + N — Work Note\nCtrl + D — Distraction Dump\n"
         )
         shortcut_text.setObjectName("Muted")
         shortcut_layout.addWidget(shortcut_title)
@@ -215,7 +231,7 @@ class HomePage(QWidget):
         music_layout.addWidget(QLabel("Volume"))
         music_layout.addWidget(self.volume, 1)
 
-        controls = QHBoxLayout()
+        controls = QGridLayout()
         controls.setSpacing(8)
         self.pause_btn = QPushButton("Pause")
         self.pause_btn.setObjectName("Primary")
@@ -227,11 +243,18 @@ class HomePage(QWidget):
         self.companion_btn.setObjectName("Warm")
         self.finish_btn = QPushButton("Finish Session")
         self.finish_btn.setObjectName("Danger")
-        for button in (
-            self.pause_btn, self.minus_btn, self.plus_btn,
-            self.note_btn, self.dump_btn, self.companion_btn, self.finish_btn
+        for index, button in enumerate(
+            (
+                self.pause_btn,
+                self.minus_btn,
+                self.plus_btn,
+                self.note_btn,
+                self.dump_btn,
+                self.companion_btn,
+                self.finish_btn,
+            )
         ):
-            controls.addWidget(button)
+            controls.addWidget(button, index // 4, index % 4)
 
         active.addWidget(self.active_mission)
         active.addWidget(self.visual, 1)
@@ -309,7 +332,9 @@ class HomePage(QWidget):
         self.preview_visual.set_resource(visual_id if visual_path else None)
 
         self.preview_name.setText(preset.get("name", "Preset"))
-        mode_text = "Stopwatch" if mode == "stopwatch" else f"Timer · {preset.get('minutes', 50)} minutes"
+        mode_text = (
+            "Stopwatch" if mode == "stopwatch" else f"Timer · {preset.get('minutes', 50)} minutes"
+        )
         ambience = ", ".join(audio_names[:3]) if audio_names else "No audio"
         if len(audio_names) > 3:
             ambience += f" + {len(audio_names) - 3} more"
@@ -322,9 +347,7 @@ class HomePage(QWidget):
             summary.append(f"{len(audio_names)} audio track{'s' if len(audio_names) != 1 else ''}")
         if visual_path:
             summary.append("1 visual")
-        self.media_summary.setText(
-            "Ambience: " + (" · ".join(summary) if summary else "None")
-        )
+        self.media_summary.setText("Ambience: " + (" · ".join(summary) if summary else "None"))
         self._mode_changed()
 
     def _mode_changed(self) -> None:
@@ -333,15 +356,17 @@ class HomePage(QWidget):
     def _request_start(self) -> None:
         preset = self.selected_preset() or {}
         mode = self.mode.currentData() or "stopwatch"
-        self.start_requested.emit({
-            "mission": self.mission.text().strip(),
-            "preset_id": preset.get("id"),
-            "preset_name": preset.get("name", ""),
-            "mode": mode,
-            "minutes": self.minutes.value() if mode == "timer" else 0,
-            "music_ids": list(preset.get("music_ids", [])),
-            "visual_id": preset.get("visual_id"),
-        })
+        self.start_requested.emit(
+            {
+                "mission": self.mission.text().strip(),
+                "preset_id": preset.get("id"),
+                "preset_name": preset.get("name", ""),
+                "mode": mode,
+                "minutes": self.minutes.value() if mode == "timer" else 0,
+                "music_ids": list(preset.get("music_ids", [])),
+                "visual_id": preset.get("visual_id"),
+            }
+        )
 
     def refresh_today(self) -> None:
         now = datetime.now().astimezone()
@@ -364,7 +389,9 @@ class HomePage(QWidget):
             f"{window_start.strftime('%b %d %H:%M')} → {window_end.strftime('%b %d %H:%M')}"
         )
 
-    def set_active(self, config: dict, session: SessionManager, has_music: bool, track_name: str = "") -> None:
+    def set_active(
+        self, config: dict, session: SessionManager, has_music: bool, track_name: str = ""
+    ) -> None:
         self.session = session
         self.start_dashboard.hide()
         self.active_card.show()

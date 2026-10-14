@@ -14,75 +14,16 @@ from .bootstrap import (
     hide_folder_windows,
     replace_managed_asset,
 )
-from .history_filters import normalize_tags
+from .defaults import (
+    DEFAULT_PRESET,
+    DEFAULT_SETTINGS,
+    LEGACY_COMPANION_KEYS,
+    SYSTEM_AUDIO_ID,
+    SYSTEM_VISUAL_ID,
+)
 from .persistence import read_json, write_json
+from .session_repository import SessionRepository
 from .utils import detect_kind, new_id, now_iso, relative_or_absolute, resolve_stored_path
-
-
-SYSTEM_AUDIO_ID = "system_default_audio"
-SYSTEM_VISUAL_ID = "system_default_visual"
-
-DEFAULT_SETTINGS = {
-    "font_family": "Segoe UI",
-    "font_size": 10,
-    "ritual_seconds": 0,
-    "audio_volume": 55,
-    "idle_enabled": True,
-    "idle_minutes": 8,
-
-    "history_day_start_hour": 0,
-    "history_chart_days": 14,
-    "visual_framing_profiles": {},
-
-    "custom_icon_path": None,
-    "default_audio_path": None,
-    "default_visual_path": None,
-
-    # Visual Companion: standalone media window.
-    "visual_companion_enabled": True,
-    "visual_companion_width": 480,
-    "visual_companion_height": 270,
-    "visual_companion_lock_aspect": True,
-    "visual_companion_opacity": 100,
-
-    # Control Companion: timer and selected controls in one compact window.
-    "control_companion_enabled": True,
-    "control_companion_width": 360,
-    "control_companion_opacity": 96,
-    "control_companion_clock_size": 32,
-    "control_companion_button_size": 10,
-    "control_companion_button_height": 30,
-    "control_companion_padding": 8,
-    "control_companion_spacing": 4,
-    "control_companion_show_timer": True,
-    "control_companion_show_status": False,
-    "control_companion_show_pause": True,
-    "control_companion_show_adjust": True,
-    "control_companion_show_main": True,
-    "control_companion_show_finish": False,
-    "control_companion_show_customize": True,
-}
-
-LEGACY_COMPANION_KEYS = {
-    "companion_show_mission", "companion_show_status", "companion_show_visual",
-    "companion_show_pause", "companion_show_adjust", "companion_show_main",
-    "companion_show_finish", "companion_show_config", "companion_show_clock",
-    "companion_visual_fit", "companion_visual_percent", "companion_control_height",
-    "companion_button_style", "companion_button_spacing", "companion_opacity",
-    "companion_width", "companion_height", "companion_timer_height",
-    "companion_timer_padding", "companion_clock_size", "companion_title_size",
-    "companion_button_size", "companion_padding", "companion_visual_ratio",
-}
-
-
-DEFAULT_PRESET = {
-    "id": "default",
-    "name": "Default",
-    "mode": "stopwatch",
-    "minutes": 50,
-    "music_ids": [SYSTEM_AUDIO_ID],
-    "visual_id": SYSTEM_VISUAL_ID,
-}
 
 
 class Store(QObject):
@@ -108,7 +49,6 @@ class Store(QObject):
         self.data_dir.mkdir(parents=True, exist_ok=True)
         hide_folder_windows(self.data_dir)
 
-
         self.system_assets = ensure_system_assets(self.data_dir)
 
         self.state_path = self.data_dir / "state.json"
@@ -122,7 +62,11 @@ class Store(QObject):
         self._migrate_companion_settings(saved_settings)
         self.presets: list[dict[str, Any]] = state.get("presets", [])
         self.resources: list[dict[str, Any]] = self._read(self.resources_path, [])
-        self.sessions: list[dict[str, Any]] = self._read(self.sessions_path, [])
+        self._history = SessionRepository(
+            self.sessions_path,
+            writer=lambda records: self._write(self.sessions_path, records),
+            changed=self.sessions_changed.emit,
+        )
         self._migrate_history_records()
 
         self._ensure_default_preset()
@@ -141,7 +85,9 @@ class Store(QObject):
         if legacy_present:
             # Preserve the user's broad intent without carrying old geometry logic forward.
             if "companion_show_visual" in saved_settings:
-                self.settings["visual_companion_enabled"] = bool(saved_settings.get("companion_show_visual"))
+                self.settings["visual_companion_enabled"] = bool(
+                    saved_settings.get("companion_show_visual")
+                )
             if "companion_width" in saved_settings:
                 try:
                     old_width = int(saved_settings.get("companion_width", 360))
@@ -163,12 +109,16 @@ class Store(QObject):
                     pass
             if "companion_clock_size" in saved_settings:
                 try:
-                    self.settings["control_companion_clock_size"] = max(12, min(120, int(saved_settings.get("companion_clock_size", 32))))
+                    self.settings["control_companion_clock_size"] = max(
+                        12, min(120, int(saved_settings.get("companion_clock_size", 32)))
+                    )
                 except (TypeError, ValueError):
                     pass
             if "companion_button_size" in saved_settings:
                 try:
-                    self.settings["control_companion_button_size"] = max(7, min(32, int(saved_settings.get("companion_button_size", 10))))
+                    self.settings["control_companion_button_size"] = max(
+                        7, min(32, int(saved_settings.get("companion_button_size", 10)))
+                    )
                 except (TypeError, ValueError):
                     pass
             for old_key, new_key in (
@@ -650,9 +600,7 @@ class Store(QObject):
         - External links are never deleted automatically.
         """
         candidates = [
-            p.resolve()
-            for p in self.resources_dir.rglob("*")
-            if self._is_scan_candidate(p)
+            p.resolve() for p in self.resources_dir.rglob("*") if self._is_scan_candidate(p)
         ]
         candidate_set = set(candidates)
         claimed: set[Path] = set()
@@ -665,7 +613,8 @@ class Store(QObject):
 
         # Existing internal entries.
         internal_items = [
-            r for r in self.resources
+            r
+            for r in self.resources
             if not r.get("special") and (r.get("auto_internal") or r.get("managed"))
         ]
 
@@ -682,10 +631,7 @@ class Store(QObject):
                 continue
 
             filename = str(item.get("filename", "")).lower()
-            matches = [
-                p for p in candidates
-                if p not in claimed and p.name.lower() == filename
-            ]
+            matches = [p for p in candidates if p not in claimed and p.name.lower() == filename]
             if len(matches) == 1:
                 found = matches[0]
                 item["primary_path"] = relative_or_absolute(found, self.app_root)
@@ -793,107 +739,24 @@ class Store(QObject):
 
     # ---------- history ----------
 
+    @property
+    def sessions(self) -> list[dict[str, Any]]:
+        return self._history.records
+
     def add_session(self, session: dict[str, Any]) -> None:
-        session = dict(session)
-        session.pop("break_seconds", None)
-        if "tags" in session:
-            session["tags"] = normalize_tags(session["tags"])
-        updated = [*self.sessions, session]
-        self._write(self.sessions_path, updated)
-        self.sessions = updated
-        self.sessions_changed.emit()
+        self._history.add_session(session)
 
     def session_by_id(self, session_id: str | None):
-        if not session_id:
-            return None
-        return next((item for item in self.sessions if item.get("id") == session_id), None)
+        return self._history.session_by_id(session_id)
 
     def update_session(self, session_id: str | None, updated: dict[str, Any]) -> bool:
-        """Replace the editable contents of one History entry while preserving its ID."""
-        if not session_id:
-            return False
-
-        for index, existing in enumerate(self.sessions):
-            if existing.get("id") != session_id:
-                continue
-
-            merged = dict(existing)
-            merged.update(dict(updated))
-            merged["id"] = session_id
-            merged["edited_at"] = now_iso()
-            if "tags" in merged:
-                merged["tags"] = normalize_tags(merged["tags"])
-
-            # Keep the stored record internally consistent even if it was
-            # imported from an older Cyndaquil version.
-            merged.pop("break_seconds", None)
-            for key in ("target_seconds", "focused_seconds"):
-                try:
-                    merged[key] = max(0, int(merged.get(key, 0) or 0))
-                except (TypeError, ValueError):
-                    merged[key] = 0
-
-            merged["mission"] = str(merged.get("mission", "") or "")
-            merged["preset_name"] = str(merged.get("preset_name", "") or "")
-            merged["completion_note"] = str(merged.get("completion_note", "") or "")
-            merged["mode"] = "timer" if merged.get("mode") == "timer" else "stopwatch"
-            merged["distractions"] = [
-                str(value).strip()
-                for value in (merged.get("distractions") or [])
-                if str(value).strip()
-            ]
-            merged["music_ids"] = [
-                str(value)
-                for value in (merged.get("music_ids") or [])
-                if value
-            ]
-
-            sessions = list(self.sessions)
-            sessions[index] = merged
-            self._write(self.sessions_path, sessions)
-            self.sessions = sessions
-            self.sessions_changed.emit()
-            return True
-
-        return False
+        return self._history.update_session(session_id, updated)
 
     def update_session_seconds(self, session_id: str, seconds: int) -> None:
-        # Retained for compatibility with older callers. The History page now
-        # uses update_session() through the full Session Entry editor.
-        item = self.session_by_id(session_id)
-        if not item:
-            return
-        updated = dict(item)
-        updated["focused_seconds"] = max(0, int(seconds))
-        self.update_session(session_id, updated)
+        self._history.update_session_seconds(session_id, seconds)
 
     def update_session_tags(self, session_ids, tags, *, remove=False) -> int:
-        """Update selected records together; commit to memory only after saving."""
-        selected = set(session_ids)
-        tags = normalize_tags(tags)
-        if not selected or not tags:
-            return 0
-        removed = {tag.casefold() for tag in tags}
-        sessions = list(self.sessions)
-        changed = 0
-        for index, session in enumerate(sessions):
-            if session.get("id") not in selected:
-                continue
-            existing = normalize_tags(session.get("tags", []))
-            updated = ([tag for tag in existing if tag.casefold() not in removed]
-                       if remove else normalize_tags([*existing, *tags]))
-            if updated == existing:
-                continue
-            sessions[index] = {**session, "tags": updated, "edited_at": now_iso()}
-            changed += 1
-        if changed:
-            self._write(self.sessions_path, sessions)
-            self.sessions = sessions
-            self.sessions_changed.emit()
-        return changed
+        return self._history.update_session_tags(session_ids, tags, remove=remove)
 
     def delete_session(self, session_id: str) -> None:
-        sessions = [s for s in self.sessions if s.get("id") != session_id]
-        self._write(self.sessions_path, sessions)
-        self.sessions = sessions
-        self.sessions_changed.emit()
+        self._history.delete_session(session_id)

@@ -1,33 +1,35 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QFont, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
-    QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu,
-    QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon,
-    QVBoxLayout, QWidget
+    QHBoxLayout,
+    QMainWindow,
+    QMenu,
+    QMessageBox,
+    QStackedWidget,
+    QSystemTrayIcon,
+    QWidget,
 )
 
-from . import APP_NAME
-from .instance import SingleInstanceGuard
-from .tag_editor import available_tags
-from .ui_helpers import CompletionDialog, WheelInputGuard
-from .persistence import PersistenceError
-from .bootstrap import runtime_icon, set_windows_app_id
+from . import APP_NAME, VERSION
+from .bootstrap import runtime_icon
 from .companion import CompanionManager
 from .history import HistoryPage
 from .home import HomePage
 from .library import ResourcesPage
 from .media import AudioController
+from .navigation import NavigationPanel
+from .persistence import PersistenceError
 from .presets import PresetsPage
 from .session import IdleMonitor, SessionManager
 from .settings import SettingsPage
 from .store import Store
-from .theme import CYNDAQUIL_QSS
+from .tag_editor import available_tags
+from .ui_helpers import CompletionDialog
 
 
 def app_root() -> Path:
@@ -54,30 +56,14 @@ class MainWindow(QMainWindow):
         shell.setContentsMargins(0, 0, 0, 0)
         shell.setSpacing(0)
 
-        self.sidebar = QFrame()
-        self.sidebar.setObjectName("Sidebar")
-        self.sidebar.setFixedWidth(210)
-
-        sidebar_layout = QVBoxLayout(self.sidebar)
-        sidebar_layout.setContentsMargins(14, 16, 14, 14)
-
-        brand_row = QHBoxLayout()
-        self.emblem = QLabel()
-        self.emblem.setFixedSize(48, 48)
-        self.emblem.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.emblem.setStyleSheet("background: transparent; border: none;")
-        self._apply_runtime_icon()
-
-        brand_name = QLabel("Cyndaquil")
-        brand_name.setStyleSheet(
-            "font-size: 20px; font-weight: 900; color: #FFD16A;"
+        self.sidebar = NavigationPanel()
+        self.emblem = self.sidebar.emblem
+        self.quit_btn = self.sidebar.quit_button
+        self.sidebar.page_requested.connect(
+            lambda page, tab: self.navigate(page, tab if tab >= 0 else None)
         )
-        brand_row.addWidget(self.emblem)
-        brand_row.addWidget(brand_name)
-        brand_row.addStretch()
-
-        sidebar_layout.addLayout(brand_row)
-        sidebar_layout.addSpacing(18)
+        self.sidebar.about_requested.connect(self.show_about)
+        self._apply_runtime_icon()
 
         self.stack = QStackedWidget()
         self.home = HomePage(store)
@@ -94,23 +80,9 @@ class MainWindow(QMainWindow):
             ("Application Settings", self.settings),
         ]
 
-        self.nav_buttons = []
-        for index, (name, page) in enumerate(self.pages):
+        for _, page in self.pages:
             self.stack.addWidget(page)
-            button = QPushButton(name)
-            button.setObjectName("Nav")
-            button.setCheckable(True)
-            button.clicked.connect(
-                lambda checked=False, page_index=index: self.navigate(page_index)
-            )
-            sidebar_layout.addWidget(button)
-            self.nav_buttons.append(button)
-
-        sidebar_layout.addStretch()
-
-        self.quit_btn = QPushButton("Quit Cyndaquil")
-        self.quit_btn.setObjectName("Danger")
-        sidebar_layout.addWidget(self.quit_btn)
+        self.history.tabs.currentChanged.connect(self._history_tab_changed)
 
         shell.addWidget(self.sidebar)
         shell.addWidget(self.stack, 1)
@@ -147,9 +119,7 @@ class MainWindow(QMainWindow):
         self.home.audio_toggle_requested.connect(
             lambda: self.audio.toggle() if self.audio else None
         )
-        self.home.audio_next_requested.connect(
-            lambda: self.audio.next() if self.audio else None
-        )
+        self.home.audio_next_requested.connect(lambda: self.audio.next() if self.audio else None)
         self.home.audio_previous_requested.connect(
             lambda: self.audio.previous() if self.audio else None
         )
@@ -191,12 +161,26 @@ class MainWindow(QMainWindow):
             self.companion.apply_settings(resize_windows=True)
             self.companion.refresh()
 
-    def navigate(self, index: int) -> None:
+    def navigate(self, index: int, history_tab: int | None = None) -> None:
+        if index == 2 and history_tab is not None:
+            self.history.tabs.setCurrentIndex(history_tab)
         self.stack.setCurrentIndex(index)
-        for i, button in enumerate(self.nav_buttons):
-            button.setChecked(i == index)
+        self.sidebar.set_current(index, self.history.tabs.currentIndex())
 
-    # ---------- session ----------
+    def _history_tab_changed(self, tab: int) -> None:
+        if self.stack.currentIndex() == 2:
+            self.sidebar.set_current(2, tab)
+
+    def show_about(self) -> None:
+        folder = Path(__file__).resolve().parent.parent
+        QMessageBox.about(
+            self,
+            f"About {APP_NAME}",
+            f"{APP_NAME} {VERSION}\n\nFocus sessions, ambience, and session history.\n\n"
+            f"Application folder: {folder}\nData folder: {self.store.data_dir}\n\n"
+            "After pulling an update, fully quit Cyndaquil before launching it again.",
+        )
+
     def start_session(self, config: dict) -> None:
         if self.session is not None:
             self.navigate(0)
@@ -263,7 +247,6 @@ class MainWindow(QMainWindow):
         if not self.session or self.ritual_timer.isActive():
             return
         self.session.toggle_pause()
-
 
     def adjust_time(self, seconds: int) -> None:
         if self.session:
@@ -350,7 +333,9 @@ class MainWindow(QMainWindow):
         box.setWindowTitle("Discard Session Without Saving?")
         box.setIcon(QMessageBox.Icon.Warning)
         box.setText("This session will be permanently discarded and will not appear in History.")
-        box.setInformativeText("Focused time, completion notes, and the session record cannot be recovered after this action.")
+        box.setInformativeText(
+            "Focused time, completion notes, and the session record cannot be recovered after this action."
+        )
         discard = box.addButton("Discard Session", QMessageBox.ButtonRole.DestructiveRole)
         cancel = box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(cancel)
@@ -367,8 +352,12 @@ class MainWindow(QMainWindow):
             else self
         )
 
-        dialog = CompletionDialog(parent, self.session.work_notes_text(),
-                                  self.session.tags, available_tags(self.store.sessions))
+        dialog = CompletionDialog(
+            parent,
+            self.session.work_notes_text(),
+            self.session.tags,
+            available_tags(self.store.sessions),
+        )
         result = dialog.exec()
 
         if result == CompletionDialog.SAVE:
@@ -435,7 +424,7 @@ class MainWindow(QMainWindow):
         )
         box.setInformativeText("How should this time be handled?")
 
-        still = box.addButton(
+        box.addButton(
             "Keep Counting",
             QMessageBox.ButtonRole.AcceptRole,
         )
@@ -529,7 +518,7 @@ class MainWindow(QMainWindow):
 
             if clicked == discard and not self._confirm_failure_discard(parent):
                 return
-            self._end_session("", save_history=(clicked == save))
+            self._end_session(self.session.work_notes_text(), save_history=(clicked == save))
             if self.session is not None:
                 return
 
@@ -551,43 +540,7 @@ class MainWindow(QMainWindow):
 
 
 def run() -> None:
-    set_windows_app_id()
+    """Compatibility entry point for existing launchers and local integrations."""
+    from .app import run as run_application
 
-    app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
-    app.setQuitOnLastWindowClosed(False)
-    app.setStyleSheet(CYNDAQUIL_QSS)
-
-    wheel_guard = WheelInputGuard(app)
-    app.installEventFilter(wheel_guard)
-    app._wheel_input_guard = wheel_guard
-
-    guard = SingleInstanceGuard()
-    if not guard.acquire():
-        return
-
-    try:
-        store = Store(app_root())
-    except PersistenceError as error:
-        QMessageBox.critical(None, "Unable to Load Cyndaquil", str(error))
-        return
-
-    app.setFont(
-        QFont(
-            store.settings.get("font_family", "Segoe UI"),
-            int(store.settings.get("font_size", 10)),
-        )
-    )
-    app.setWindowIcon(runtime_icon(store.current_icon_path()))
-
-    window = MainWindow(store)
-    guard.start_server(window)
-
-    # Keep the guard alive for the lifetime of the application.
-    window._single_instance_guard = guard
-
-    # Maximized is Cyndaquil's native/default workspace. It uses the available
-    # screen without forcing an exclusive borderless full-screen mode.
-    window.showMaximized()
-
-    sys.exit(app.exec())
+    run_application(app_root())
