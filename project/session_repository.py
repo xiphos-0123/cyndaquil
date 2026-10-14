@@ -8,7 +8,7 @@ from typing import Any
 
 from .history_filters import normalize_tags
 from .persistence import read_json
-from .utils import now_iso
+from .utils import now_iso, parse_iso_datetime
 
 
 class SessionRepository:
@@ -78,6 +78,66 @@ class SessionRepository:
             return True
 
         return False
+
+    def update_sessions(self, updates: dict, *, expected: dict | None = None) -> int:
+        """Apply explicit patches atomically without normalizing untouched fields."""
+        allowed = {
+            "mission",
+            "preset_name",
+            "completion_note",
+            "tags",
+            "mode",
+            "started_at",
+            "ended_at",
+            "focused_seconds",
+            "target_seconds",
+        }
+        if not updates:
+            return 0
+        selected = [record for record in self.records if record.get("id") in updates]
+        if len(selected) != len(updates) or len({r.get("id") for r in selected}) != len(updates):
+            raise ValueError(
+                "A selected session is missing or has a duplicate ID. Reopen the editor."
+            )
+        sessions = list(self.records)
+        changed = 0
+        for index, record in enumerate(sessions):
+            sid = record.get("id")
+            if sid not in updates:
+                continue
+            if expected is not None and expected.get(sid) != record:
+                raise ValueError(
+                    "A selected session changed while editing. Reopen the editor to load it."
+                )
+            patch = dict(updates[sid])
+            if set(patch) - allowed:
+                raise ValueError("This edit contains unsupported fields.")
+            for key in ("mission", "preset_name", "completion_note", "started_at", "ended_at"):
+                if key in patch and not isinstance(patch[key], str):
+                    raise ValueError(f"{key} must be text.")
+            for key in ("focused_seconds", "target_seconds"):
+                if key in patch and (type(patch[key]) is not int or patch[key] < 0):
+                    raise ValueError(f"{key} must be a nonnegative duration.")
+            if "mode" in patch and patch["mode"] not in {"timer", "stopwatch"}:
+                raise ValueError("Choose Timer or Stopwatch.")
+            if "tags" in patch:
+                patch["tags"] = normalize_tags(patch["tags"])
+            merged = {**record, **patch}
+            for key in ("started_at", "ended_at"):
+                if key in patch and patch[key] and parse_iso_datetime(patch[key]) is None:
+                    raise ValueError("Enter a valid session timestamp.")
+            start = parse_iso_datetime(merged.get("started_at"))
+            end = parse_iso_datetime(merged.get("ended_at"))
+            if {"started_at", "ended_at"} & patch.keys() and start and end and end < start:
+                raise ValueError(
+                    "Finished At cannot be earlier than Started At for any selected session."
+                )
+            if merged != record:
+                sessions[index] = {**merged, "edited_at": now_iso()}
+                changed += 1
+        if changed:
+            self._commit(sessions)
+        return changed
 
     def update_session_seconds(self, session_id: str, seconds: int) -> None:
         # Retained for compatibility with older callers. The History page now

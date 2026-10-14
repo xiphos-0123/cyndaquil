@@ -14,6 +14,7 @@ from project.session import SessionManager
 from project.session_entry import SessionEntryDialog
 from project.store import Store
 from project.ui_helpers import CompletionDialog
+from tests.qt_helpers import dispose
 
 
 class HistoryTests(unittest.TestCase):
@@ -45,7 +46,7 @@ class HistoryTests(unittest.TestCase):
                 }
             )
         self.page = HistoryPage(self.store)
-        self.addCleanup(self.page.hide)
+        self.addCleanup(lambda: dispose(self.page))
 
     def test_views_and_recent_and_custom_dates_do_not_change_records(self):
         before = self.store.sessions_path.read_bytes()
@@ -166,12 +167,13 @@ class HistoryTests(unittest.TestCase):
         session.tags = dialog.tags.tags()
         self.assertEqual(session.finish_payload(dialog.text())["tags"], ["Reading", "Study"])
 
-    def test_multiple_selection_enables_bulk_action_only(self):
+    def test_multiple_selection_enables_bulk_edit(self):
         flags = QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows
         for row in (0, 1):
             self.page.table.selectionModel().select(self.page.table.model().index(row, 0), flags)
         self.assertTrue(self.page.tag_selected.isEnabled())
-        self.assertFalse(self.page.open_entry.isEnabled())
+        self.assertTrue(self.page.open_entry.isEnabled())
+        self.assertIn("2 sessions", self.page.open_entry.text())
         self.assertFalse(self.page.delete.isEnabled())
         self.page.refresh()
         self.assertEqual(len(self.page.selected_ids()), 2)

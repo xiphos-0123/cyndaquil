@@ -38,7 +38,7 @@ def _parse_duration(text: str, field_name: str) -> int:
             if minutes < 0 or minutes >= 60 or seconds < 0 or seconds >= 60:
                 raise ValueError
             return max(0, hours * 3600 + minutes * 60 + seconds)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         pass
     raise ValueError(
         f"{field_name} must be HH:MM:SS, MM:SS, seconds, or a value such as 45m / 1.5h."

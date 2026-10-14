@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .bulk_session_entry import BulkSessionEntryDialog
 from .history_filters import filter_sessions, normalize_tags
 from .history_records import _session_nonfocus_seconds, _session_span_seconds, _short_datetime
 from .persistence import PersistenceError
@@ -36,6 +37,7 @@ from .session_entry import SessionEntryDialog
 from .statistics_view import StatisticsView
 from .store import Store
 from .tag_editor import BulkTagDialog, TagEditor, available_tags
+from .ui_helpers import RowSelectionDelegate
 from .utils import (
     current_reporting_day,
     format_seconds,
@@ -67,6 +69,7 @@ class HistoryPage(QWidget):
         tag_controls.setContentsMargins(16, 14, 16, 14)
         tag_controls.setSpacing(12)
         self.tag_filter = TagEditor(available=available_tags(store.sessions))
+        self.tag_filter.setMaximumWidth(280)
         self.tag_filter.suggestions.hide()
         self.tag_filter.add.hide()
         self.tag_filter.text.setPlaceholderText("Filter by tags…")
@@ -123,6 +126,7 @@ class HistoryPage(QWidget):
         date_range.addWidget(self.to_date)
         date_range.addStretch()
         self.clear_filters = QPushButton("Reset")
+        tag_controls.addStretch()
         tag_controls.addWidget(self.clear_filters)
         history_layout.addWidget(self.date_range_controls)
         self.date_range_controls.hide()
@@ -167,9 +171,10 @@ class HistoryPage(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         self.table.setShowGrid(False)
+        self.table.setItemDelegate(RowSelectionDelegate(self.table))
         self.table.verticalHeader().setMinimumSectionSize(44)
         self.table.verticalHeader().setDefaultSectionSize(44)
-        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setStretchLastSection(False)
         self.table.setWordWrap(True)
         self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -179,6 +184,7 @@ class HistoryPage(QWidget):
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.verticalHeader().hide()
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self._set_timing_details(False)
         self.session_splitter = QSplitter(Qt.Orientation.Vertical)
         self.session_splitter.setChildrenCollapsible(False)
@@ -349,7 +355,7 @@ class HistoryPage(QWidget):
         for column, width in enumerate((132, 145, 190, 90, 100, 94, 100, 140, 150)):
             self.table.setColumnWidth(column, width)
         self.table.resizeRowsToContents()
-        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setStretchLastSection(False)
         for row in selected_rows:
             self.table.selectionModel().select(
                 self.table.model().index(row, 0),
@@ -382,6 +388,10 @@ class HistoryPage(QWidget):
         self.tag_selected.setText(
             f"Edit tags for {count} selected session{'s' if count != 1 else ''}…"
         )
+        edit = menu.addAction(
+            f"Edit {count} selected session{'s' if count != 1 else ''}…", self.open_selected_entry
+        )
+        edit.setEnabled(count > 0)
         menu.addAction(self.tag_selected)
         menu.exec(self.table.viewport().mapToGlobal(position))
 
@@ -403,14 +413,25 @@ class HistoryPage(QWidget):
 
     def _update_actions(self) -> None:
         selected = self.selected_id() is not None
-        self.open_entry.setEnabled(selected)
+        count = len(self.selected_ids())
+        self.open_entry.setEnabled(count > 0)
+        self.open_entry.setText(f"Edit {count} sessions…" if count > 1 else "Edit session…")
         self.delete.setEnabled(selected)
         self.tag_selected.setEnabled(bool(self.selected_ids()))
 
     def open_selected_entry(self) -> None:
-        session = self.selected_session()
-        if session:
-            SessionEntryDialog(self.store, session, self).exec()
+        sessions = [self.store.session_by_id(sid) for sid in self.selected_ids()]
+        sessions = [session for session in sessions if session is not None]
+        if len(sessions) > 1:
+            dialog = BulkSessionEntryDialog(self.store, sessions, self)
+        elif sessions:
+            dialog = SessionEntryDialog(self.store, sessions[0], self)
+        else:
+            return
+        try:
+            dialog.exec()
+        finally:
+            dialog.deleteLater()
 
     def delete_entry(self) -> None:
         sid = self.selected_id()

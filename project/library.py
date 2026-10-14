@@ -82,6 +82,11 @@ class ResourcesPage(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        self.table.setWordWrap(False)
+        self.table.verticalHeader().setMinimumSectionSize(48)
+        self.table.verticalHeader().setDefaultSectionSize(52)
+        self.table.verticalHeader().setMinimumWidth(48)
+        self.table.verticalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.horizontalHeader().setStretchLastSection(True)
 
         root.addWidget(title)

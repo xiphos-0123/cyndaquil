@@ -14,6 +14,8 @@ Cyndaquil is a PySide6 desktop app. `Cyndaquil.pyw` calls `project.app.run`.
 | `statistics_view.py` | Statistics widgets and reporting controls |
 | `history_analytics.py` | Reporting-day totals, windows, trends |
 | `history_chart.py` | Chart painting |
+| `mixed_text.py` | Lossless common-text alignment and per-record marker expansion |
+| `bulk_session_entry.py` | Explicit multi-session editing and marked differences |
 | `session_entry.py` | Explicitly saved session edits, collapsed distractions |
 | `session_repository.py` | History updates committed before notifying the UI |
 | `persistence.py` | Validated JSON reads, atomic saves, previous-file backups |

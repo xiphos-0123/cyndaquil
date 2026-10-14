@@ -317,6 +317,22 @@ class Store(QObject):
         if not default.get("visual_id"):
             default["visual_id"] = SYSTEM_VISUAL_ID
 
+    def reorder_presets(self, ordered_ids) -> None:
+        current_ids = [preset.get("id") for preset in self.presets]
+        if (
+            len(ordered_ids) != len(current_ids)
+            or len(set(ordered_ids)) != len(ordered_ids)
+            or set(ordered_ids) != set(current_ids)
+        ):
+            raise ValueError("Preset order must contain each existing preset exactly once.")
+        if list(ordered_ids) == current_ids:
+            return
+        by_id = {preset.get("id"): preset for preset in self.presets}
+        ordered = [by_id[pid] for pid in ordered_ids]
+        self._write(self.state_path, {"settings": self.settings, "presets": ordered})
+        self.presets = ordered
+        self.presets_changed.emit()
+
     def preset_by_id(self, preset_id: str | None):
         return next((p for p in self.presets if p.get("id") == preset_id), None)
 
@@ -751,6 +767,9 @@ class Store(QObject):
 
     def update_session(self, session_id: str | None, updated: dict[str, Any]) -> bool:
         return self._history.update_session(session_id, updated)
+
+    def update_sessions(self, updates: dict, *, expected: dict | None = None) -> int:
+        return self._history.update_sessions(updates, expected=expected)
 
     def update_session_seconds(self, session_id: str, seconds: int) -> None:
         self._history.update_session_seconds(session_id, seconds)

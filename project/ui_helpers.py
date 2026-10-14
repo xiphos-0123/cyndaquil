@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QLabel,
     QPlainTextEdit,
+    QStyle,
+    QStyledItemDelegate,
     QVBoxLayout,
 )
 
@@ -112,3 +114,11 @@ class CompletionDialog(QDialog):
 
     def text(self) -> str:
         return self.note.toPlainText().strip()
+
+
+class RowSelectionDelegate(QStyledItemDelegate):
+    """Keep keyboard navigation while removing the focus rectangle on one cell."""
+
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        option.state &= ~QStyle.StateFlag.State_HasFocus

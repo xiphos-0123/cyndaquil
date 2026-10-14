@@ -10,6 +10,7 @@ from project.main import MainWindow
 from project.persistence import PersistenceError
 from project.session import SessionManager
 from project.store import Store
+from tests.qt_helpers import dispose
 
 
 class WindowSafetyTests(unittest.TestCase):
@@ -23,7 +24,7 @@ class WindowSafetyTests(unittest.TestCase):
         self.store = Store(Path(self.directory.name))
         self.window = MainWindow(self.store)
         self.addCleanup(self.store._resource_timer.stop)
-        self.addCleanup(self.window.hide)
+        self.addCleanup(lambda: dispose(self.window))
 
     def test_failed_save_keeps_session_available_for_retry(self):
         self.window.session = SessionManager({"mode": "stopwatch"})
@@ -57,7 +58,7 @@ class WindowSafetyTests(unittest.TestCase):
         self.assertFalse(self.window.sidebar.buttons[2].isChecked())
         self.window.history.views.setCurrentIndex(0)
         self.assertTrue(self.window.sidebar.buttons[2].isChecked())
-        self.assertEqual(self.window.sidebar.version_label.text(), "Version 5.2.0")
+        self.assertEqual(self.window.sidebar.version_label.text(), "Version 5.3.0")
 
     def test_quit_and_save_preserves_work_notes(self):
         session = SessionManager({"mode": "stopwatch"})

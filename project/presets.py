@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .persistence import PersistenceError
 from .store import Store
 from .utils import new_id
 
@@ -30,6 +31,7 @@ class PresetsPage(QWidget):
         self.store = store
         self.music_boxes: dict[str, QCheckBox] = {}
         self.current_id: str | None = None
+        self._reordering = False
 
         root = QHBoxLayout(self)
         root.setContentsMargins(24, 22, 24, 22)
@@ -50,6 +52,14 @@ class PresetsPage(QWidget):
 
         self.list = QListWidget()
 
+        self.move_up = QPushButton("Move up")
+        self.move_down = QPushButton("Move down")
+        order_row = QHBoxLayout()
+        order_row.addWidget(self.move_up)
+        order_row.addWidget(self.move_down)
+        self.move_up.clicked.connect(lambda: self.move_selected(-1))
+        self.move_down.clicked.connect(lambda: self.move_selected(1))
+
         self.new_btn = QPushButton("New Preset")
         self.duplicate_btn = QPushButton("Duplicate")
         self.delete_btn = QPushButton("Delete")
@@ -61,6 +71,7 @@ class PresetsPage(QWidget):
         left_layout.addWidget(title)
         left_layout.addWidget(description)
         left_layout.addWidget(self.list, 1)
+        left_layout.addLayout(order_row)
         left_layout.addLayout(button_row)
         left.setMaximumWidth(340)
 
@@ -154,8 +165,6 @@ class PresetsPage(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, preset.get("id"))
             self.list.addItem(item)
 
-        self.list.blockSignals(False)
-
         row = 0
         if wanted:
             for index in range(self.list.count()):
@@ -164,7 +173,31 @@ class PresetsPage(QWidget):
                     break
 
         self.list.setCurrentRow(row)
-        self._selection_changed(self.list.currentItem(), None)
+        self.list.blockSignals(False)
+        if self._reordering:
+            self._update_order_buttons()
+        else:
+            self._selection_changed(self.list.currentItem(), None)
+
+    def _update_order_buttons(self):
+        row = self.list.currentRow()
+        self.move_up.setEnabled(row > 0)
+        self.move_down.setEnabled(0 <= row < self.list.count() - 1)
+
+    def move_selected(self, direction):
+        row = self.list.currentRow()
+        target = row + direction
+        if row < 0 or not 0 <= target < self.list.count():
+            return
+        ids = [preset.get("id") for preset in self.store.presets]
+        ids[row], ids[target] = ids[target], ids[row]
+        self._reordering = True
+        try:
+            self.store.reorder_presets(ids)
+        except (ValueError, PersistenceError) as error:
+            QMessageBox.warning(self, "Preset Order Was Not Saved", str(error))
+        finally:
+            self._reordering = False
 
     def refresh_resources(self) -> None:
         preset = self.store.preset_by_id(self.current_id) or {}
@@ -221,6 +254,7 @@ class PresetsPage(QWidget):
         self.visual.blockSignals(False)
 
     def _selection_changed(self, current, previous) -> None:
+        self._update_order_buttons()
         if not current:
             return
 

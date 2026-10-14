@@ -303,7 +303,7 @@ expanded without changing its saved contents.
 
 UPDATING AND IDENTIFYING THE RUNNING APP
 --------------------------------------
-Version 5.2.0 appears at the bottom of the sidebar. Session History and Statistics
+Version 5.3.0 appears at the bottom of the sidebar. Session History and Statistics
 are separate sidebar destinations. About Cyndaquil shows both the running version
 and the application/data folders so you can confirm which copy is running.
 
@@ -324,3 +324,26 @@ cream (#ffefa5), and yellow (#ffde00), with darker blue surfaces for readable te
 History filters share one compact row. Tag suggestions appear while typing.
 Completion notes use a separate padded card with a resizable gap below the table.
 The media library, generated ambience, and custom branding are preserved.
+
+EDITING MULTIPLE SESSIONS
+-------------------------
+Select sessions with Ctrl/Shift in Session History, then use Edit N sessions...
+(or the right-click menu). Shared text appears normally. A mixed marker such as
+⟦1⟧ represents each record's own different text. Keep the
+whole marker to preserve those differences, or replace/remove it to change that
+section for all selected records. View differing sections... shows the originals.
+Completion notes retain their line breaks. Only checked fields are saved; editing
+a field checks it automatically. Uncheck it to leave that field alone.
+
+The multi-editor supports objectives, preset names, notes, tags, modes, focus and
+target durations, and start/finish timestamps. Changes save together; a failure
+leaves all selected records unchanged. Other saved fields remain intact.
+
+PRESET ORDER
+------------
+Select a Focus Preset and use Move up / Move down. The order is saved immediately
+and is used by the Focus Session preset selector. The permanent Default preset
+can be moved but cannot be deleted. Reordering retains unsaved editor text.
+
+Resource Library rows now have more height and wider numbered row headers.
+History selection highlights complete rows without a separate cell focus box.

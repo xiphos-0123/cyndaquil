@@ -1,2 +1,2 @@
 APP_NAME = "Cyndaquil"
-VERSION = "5.2.0"
+VERSION = "5.3.0"

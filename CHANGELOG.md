@@ -1,5 +1,15 @@
 # Changes
 
+## 5.3.0
+
+- Multi-edit selected history records. Shared text is editable, while highlighted
+  markers preserve per-session differences, including multiline completion notes.
+- Apply only selected fields, validate the whole batch, and save once. Existing IDs,
+  timestamp precision, unknown fields and unselected records are preserved.
+- Shorten the tags column/filter and remove the individual-cell focus rectangle.
+- Increase Resource Library row height and width for numbered row headers.
+- Move presets up/down with persistent ordering and retention of unsaved editor text.
+
 ## 5.2.0
 
 - Apply the blue, slate, bronze, cream and yellow palette consistently to controls,
