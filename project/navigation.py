@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from . import APP_NAME, VERSION
+from .theme import COLORS
 
 
 class NavigationPanel(QFrame):
@@ -31,7 +32,7 @@ class NavigationPanel(QFrame):
         self.emblem.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.emblem.setStyleSheet("background: transparent; border: none;")
         name = QLabel(APP_NAME)
-        name.setStyleSheet("font-size: 20px; font-weight: 900; color: #FFD16A;")
+        name.setStyleSheet(f"font-size: 20px; font-weight: 900; color: {COLORS['cream']};")
         brand.addWidget(self.emblem)
         brand.addWidget(name)
         brand.addStretch()
@@ -58,6 +59,6 @@ class NavigationPanel(QFrame):
         self.quit_button.setObjectName("Danger")
         layout.addWidget(self.quit_button)
 
-    def set_current(self, page, history_tab=0):
+    def set_current(self, page, history_view=0):
         for button, (_, target, tab) in zip(self.buttons, self.ROUTES):
-            button.setChecked(target == page and (tab < 0 or tab == history_tab))
+            button.setChecked(target == page and (tab < 0 or tab == history_view))

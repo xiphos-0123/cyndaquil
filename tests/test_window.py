@@ -50,14 +50,14 @@ class WindowSafetyTests(unittest.TestCase):
     def test_sidebar_opens_history_and_statistics_directly(self):
         self.window.sidebar.buttons[2].click()
         self.assertEqual(self.window.stack.currentWidget(), self.window.history)
-        self.assertEqual(self.window.history.tabs.currentIndex(), 0)
+        self.assertEqual(self.window.history.views.currentIndex(), 0)
         self.window.sidebar.buttons[3].click()
-        self.assertEqual(self.window.history.tabs.currentIndex(), 1)
+        self.assertEqual(self.window.history.views.currentIndex(), 1)
         self.assertTrue(self.window.sidebar.buttons[3].isChecked())
         self.assertFalse(self.window.sidebar.buttons[2].isChecked())
-        self.window.history.tabs.setCurrentIndex(0)
+        self.window.history.views.setCurrentIndex(0)
         self.assertTrue(self.window.sidebar.buttons[2].isChecked())
-        self.assertEqual(self.window.sidebar.version_label.text(), "Version 5.1.0")
+        self.assertEqual(self.window.sidebar.version_label.text(), "Version 5.2.0")
 
     def test_quit_and_save_preserves_work_notes(self):
         session = SessionManager({"mode": "stopwatch"})

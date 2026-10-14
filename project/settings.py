@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 from .companion import ControlCompanionConfig, StableSpinBox, VisualCompanionConfig
 from .media import MediaVisual
 from .store import Store
+from .theme import COLORS
 from .utils import reveal_path
 
 
@@ -113,7 +114,7 @@ class ControlCompanionPreview(QFrame):
         self.finish.setVisible(config.show_finish)
         self.customize.setVisible(config.show_customize)
         self.clock.setStyleSheet(
-            f"font-size:{config.clock_size}px; font-weight:900; color:#FFD16A; background:transparent;"
+            f"font-size:{config.clock_size}px; font-weight:900; color:{COLORS['gold']}; background:transparent;"
         )
         for _, button in self.buttons:
             button.setFixedHeight(config.button_height)

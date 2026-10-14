@@ -26,6 +26,7 @@ from .defaults import DEFAULT_SETTINGS
 from .media import MediaVisual
 from .session import SessionManager
 from .store import Store
+from .theme import COLORS
 from .utils import format_seconds
 
 VISUAL_KEYS = (
@@ -535,7 +536,7 @@ class ControlCompanionWindow(DraggableToolWindow):
         self.customize_btn.setVisible(config.show_customize)
 
         self.clock.setStyleSheet(
-            f"font-size:{config.clock_size}px; font-weight:900; color:#FFD16A; background:transparent;"
+            f"font-size:{config.clock_size}px; font-weight:900; color:{COLORS['gold']}; background:transparent;"
         )
         self.status.setStyleSheet("background:transparent; border:none; padding:0px;")
         for _, button in self._button_specs:

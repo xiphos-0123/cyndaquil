@@ -1,8 +1,9 @@
 """Reusable tag entry with suggestions from existing session records."""
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QStringListModel, Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
+    QCompleter,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
@@ -16,6 +17,27 @@ from PySide6.QtWidgets import (
 from .history_filters import normalize_tags
 
 
+class TagCompleter(QCompleter):
+    """Complete the current comma-separated tag without replacing earlier tags."""
+
+    def __init__(self, editor):
+        super().__init__(editor)
+        self.editor = editor
+        self.tags_model = QStringListModel(self)
+        self.setModel(self.tags_model)
+        self.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+
+    def splitPath(self, path):
+        return [path.rsplit(",", 1)[-1].strip()]
+
+    def pathFromIndex(self, index):
+        # Read from the supplied index, which may belong to Qt's filtered model.
+        tag = index.data(self.completionRole()) or ""
+        current = self.editor.text()
+        return f"{current.rsplit(',', 1)[0]}, {tag}" if "," in current else tag
+
+
 class TagEditor(QWidget):
     changed = Signal()
 
@@ -26,6 +48,8 @@ class TagEditor(QWidget):
         self.text = QLineEdit(", ".join(normalize_tags(tags)))
         self.text.setPlaceholderText("Tags, separated by commas")
         self.text.setCursorPosition(0)
+        self.completer = TagCompleter(self.text)
+        self.text.setCompleter(self.completer)
         self.text.setAccessibleName("Session tags")
         self.text.setToolTip("For example: Waking Up Arc, Reading. A comma separates tags.")
         self.suggestions = QComboBox()
@@ -46,6 +70,7 @@ class TagEditor(QWidget):
         self.suggestions.currentIndexChanged.connect(lambda index: self.add.setEnabled(index > 0))
 
     def set_available(self, tags):
+        self.completer.tags_model.setStringList(sorted(normalize_tags(tags), key=str.casefold))
         current = self.suggestions.currentText()
         self.suggestions.clear()
         self.suggestions.addItem("Existing tags…", None)

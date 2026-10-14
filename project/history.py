@@ -22,9 +22,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSplitter,
+    QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -49,43 +49,53 @@ class HistoryPage(QWidget):
         self.store = store
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
-        root.setSpacing(12)
+        root.setContentsMargins(28, 28, 28, 28)
+        root.setSpacing(20)
 
-        title = QLabel("History & Productivity")
-        title.setObjectName("Title")
-        root.addWidget(title)
-        tag_controls = QHBoxLayout()
-        tag_controls.addWidget(QLabel("Tag filter"))
+        self.title = QLabel("Session History")
+        self.title.setObjectName("Title")
+        header = QVBoxLayout()
+        header.setSpacing(8)
+        header.addWidget(self.title)
+        self.description = QLabel("Saved focus sessions, with room to read your notes.")
+        self.description.setObjectName("Muted")
+        header.addWidget(self.description)
+        root.addLayout(header)
+        filters = QFrame()
+        filters.setObjectName("Card")
+        tag_controls = QHBoxLayout(filters)
+        tag_controls.setContentsMargins(16, 14, 16, 14)
+        tag_controls.setSpacing(12)
         self.tag_filter = TagEditor(available=available_tags(store.sessions))
+        self.tag_filter.suggestions.hide()
+        self.tag_filter.add.hide()
+        self.tag_filter.text.setPlaceholderText("Filter by tags…")
         self.tag_filter.text.setAccessibleName("Filter sessions by tags")
-        self.tag_filter.add.setText("Add filter")
+        self.tag_filter.text.setToolTip(
+            "Type one or more tags, separated by commas. Leave empty to show all sessions."
+        )
         self.tag_mode = QComboBox()
         self.tag_mode.addItem("Include any", "include")
         self.tag_mode.addItem("Exclude any", "exclude")
+        self.tag_mode.setToolTip("Include or exclude sessions matching any entered tag.")
         tag_controls.addWidget(self.tag_mode)
         tag_controls.addWidget(self.tag_filter, 1)
-        root.addLayout(tag_controls)
-        tag_hint = QLabel(
-            "Leave tags empty to show everything. Tag filters apply to both views; dates below filter Session History."
-        )
-        tag_hint.setObjectName("Muted")
-        tag_hint.setWordWrap(True)
-        root.addWidget(tag_hint)
-        self.tabs = QTabWidget()
-        root.addWidget(self.tabs, 1)
+        root.addWidget(filters)
+        self.views = QStackedWidget()
+        root.addWidget(self.views, 1)
         history_view = QWidget()
         history_layout = QVBoxLayout(history_view)
+        history_layout.setContentsMargins(0, 0, 0, 0)
+        history_layout.setSpacing(16)
         stats_scroll = QScrollArea()
         stats_scroll.setWidgetResizable(True)
         stats_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.statistics = StatisticsView(store)
         stats_scroll.setWidget(self.statistics)
-        self.tabs.addTab(history_view, "Session History")
-        self.tabs.addTab(stats_scroll, "Statistics")
+        self.views.addWidget(history_view)
+        self.views.addWidget(stats_scroll)
+        self.views.currentChanged.connect(self._view_changed)
 
-        dates = QHBoxLayout()
-        dates.addWidget(QLabel("Show"))
         self.period = QComboBox()
         for label, days in (
             ("All time", 0),
@@ -96,7 +106,9 @@ class HistoryPage(QWidget):
             ("Custom dates", -1),
         ):
             self.period.addItem(label, days)
-        dates.addWidget(self.period)
+        self.period.setAccessibleName("Session date range")
+        self.period.setMaximumWidth(140)
+        tag_controls.insertWidget(0, self.period)
         self.from_date = QDateEdit(QDate.currentDate().addDays(-6))
         self.to_date = QDateEdit(QDate.currentDate())
         for editor in (self.from_date, self.to_date):
@@ -110,26 +122,28 @@ class HistoryPage(QWidget):
         date_range.addWidget(QLabel("Through"))
         date_range.addWidget(self.to_date)
         date_range.addStretch()
-        dates.addStretch()
-        self.clear_filters = QPushButton("Reset filters")
-        dates.addWidget(self.clear_filters)
-        history_layout.addLayout(dates)
+        self.clear_filters = QPushButton("Reset")
+        tag_controls.addWidget(self.clear_filters)
         history_layout.addWidget(self.date_range_controls)
         self.date_range_controls.hide()
         self.result_count = QLabel()
         self.result_count.setObjectName("Muted")
-        history_layout.addWidget(self.result_count)
+        self.result_count.setToolTip(
+            "Newest first. Custom dates include both endpoints and use the reporting-day boundary."
+        )
 
         buttons = QHBoxLayout()
-        self.open_entry = QPushButton("Open Session Entry…")
+        buttons.setSpacing(16)
+        self.open_entry = QPushButton("Edit session…")
         self.open_entry.setObjectName("Primary")
-        self.delete = QPushButton("Delete Session")
+        self.delete = QPushButton("Delete session")
         self.delete.setObjectName("Danger")
         buttons.addWidget(self.open_entry)
         self.tag_selected = QAction("Edit tags for selected sessions…", self)
         self.show_details = QCheckBox("Show timing details")
         self.show_details.toggled.connect(self._set_timing_details)
         buttons.addWidget(self.show_details)
+        buttons.addWidget(self.result_count)
         buttons.addStretch()
         buttons.addWidget(self.delete)
         history_layout.addLayout(buttons)
@@ -152,6 +166,9 @@ class HistoryPage(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
+        self.table.verticalHeader().setMinimumSectionSize(44)
+        self.table.verticalHeader().setDefaultSectionSize(44)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setWordWrap(True)
         self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -165,24 +182,35 @@ class HistoryPage(QWidget):
         self._set_timing_details(False)
         self.session_splitter = QSplitter(Qt.Orientation.Vertical)
         self.session_splitter.setChildrenCollapsible(False)
+        self.session_splitter.setHandleWidth(28)
         self.session_splitter.addWidget(self.table)
         self.note_detail = QPlainTextEdit()
         self.note_detail.setReadOnly(True)
         self.note_detail.setPlaceholderText("Select a session to read its complete notes here.")
         self.note_detail.setAccessibleName("Selected session completion notes")
-        self.note_detail.setMinimumHeight(70)
-        note_pane = QWidget()
+        self.note_detail.setMinimumHeight(80)
+        self.note_detail.setObjectName("NoteReader")
+        note_pane = QFrame()
+        note_pane.setObjectName("NotesCard")
+        note_pane.setMinimumHeight(180)
         note_layout = QVBoxLayout(note_pane)
-        note_layout.setContentsMargins(0, 0, 0, 0)
-        self.note_title = QLabel("Completion Notes · Select a session")
+        note_layout.setContentsMargins(20, 18, 20, 20)
+        note_layout.setSpacing(12)
+        self.note_title = QLabel("Completion notes")
+        self.note_title.setObjectName("SectionTitle")
         self.note_title.setTextFormat(Qt.TextFormat.PlainText)
         self.note_title.setWordWrap(True)
         note_layout.addWidget(self.note_title)
+        self.note_context = QLabel("Select a session to read its notes")
+        self.note_context.setObjectName("Muted")
+        self.note_context.setTextFormat(Qt.TextFormat.PlainText)
+        self.note_context.setWordWrap(True)
+        note_layout.addWidget(self.note_context)
         note_layout.addWidget(self.note_detail)
         self.session_splitter.addWidget(note_pane)
         self.session_splitter.setStretchFactor(0, 1)
         self.session_splitter.setStretchFactor(1, 0)
-        self.session_splitter.setSizes([500, 130])
+        self.session_splitter.setSizes([440, 200])
         history_layout.addWidget(self.session_splitter, 1)
         self.period.currentIndexChanged.connect(self._filters_changed)
         self.from_date.dateChanged.connect(self._filters_changed)
@@ -201,6 +229,18 @@ class HistoryPage(QWidget):
         self.store.sessions_changed.connect(self.refresh)
         self.store.settings_changed.connect(self.refresh)
         self.refresh()
+
+    def show_view(self, index):
+        self.views.setCurrentIndex(index)
+
+    def _view_changed(self, index):
+        self.period.setVisible(index == 0)
+        self.title.setText("Session History" if index == 0 else "Statistics")
+        self.description.setText(
+            "Saved focus sessions, with room to read your notes."
+            if index == 0
+            else "Focused time, trends, and your reporting-day totals."
+        )
 
     def _set_timing_details(self, visible):
         for column in (1, 3, 4, 6, 7):
@@ -248,16 +288,12 @@ class HistoryPage(QWidget):
         self.note_detail.setPlainText((session.get("completion_note", "") or "") if session else "")
         if session:
             objective = session.get("mission") or session.get("preset_name") or "Focus session"
-            self.note_title.setText(
-                f"Completion Notes · {objective} · {_short_datetime(session.get('started_at'))}"
-            )
+            self.note_context.setText(f"{objective} · {_short_datetime(session.get('started_at'))}")
             self.note_detail.setPlaceholderText("This session has no completion notes.")
         else:
             multiple = len(self.selected_ids()) > 1
-            self.note_title.setText(
-                "Completion Notes · Multiple sessions selected"
-                if multiple
-                else "Completion Notes · Select a session"
+            self.note_context.setText(
+                "Multiple sessions selected" if multiple else "Select a session to read its notes"
             )
             self.note_detail.setPlaceholderText(
                 "Select one session to read its complete notes here."
@@ -274,9 +310,9 @@ class HistoryPage(QWidget):
             self.period.currentData() == -1 and self.from_date.date() > self.to_date.date()
         )
         self.result_count.setText(
-            "Choose a From date on or before Through."
+            "Invalid date range"
             if invalid_dates
-            else f"{len(sessions)} of {len(self.store.sessions)} sessions · Newest first · Dates use the reporting-day boundary"
+            else f"{len(sessions)} / {len(self.store.sessions)} sessions"
         )
 
         def started_timestamp(session):
@@ -310,7 +346,7 @@ class HistoryPage(QWidget):
             if session.get("id") in selected:
                 selected_rows.append(row)
 
-        for column, width in enumerate((145, 145, 200, 90, 100, 100, 100, 140, 180)):
+        for column, width in enumerate((132, 145, 190, 90, 100, 94, 100, 140, 150)):
             self.table.setColumnWidth(column, width)
         self.table.resizeRowsToContents()
         self.table.horizontalHeader().setStretchLastSection(True)

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from .media import MediaVisual
 from .session import SessionManager
 from .store import Store
+from .theme import COLORS
 from .utils import (
     current_reporting_day,
     format_seconds,
@@ -145,7 +146,9 @@ class HomePage(QWidget):
         self.preview_visual = MediaVisual(store)
         self.preview_visual.setMinimumHeight(230)
         self.preview_name = QLabel("Default")
-        self.preview_name.setStyleSheet("font-size: 18px; font-weight: 800; color: #FFD16A;")
+        self.preview_name.setStyleSheet(
+            f"font-size: 18px; font-weight: 800; color: {COLORS['cream']};"
+        )
         self.preview_details = QLabel("")
         self.preview_details.setWordWrap(True)
         self.preview_details.setObjectName("Muted")
@@ -160,7 +163,9 @@ class HomePage(QWidget):
         today_title = QLabel("Current Reporting Day")
         today_title.setObjectName("SectionTitle")
         self.today_time = QLabel("00:00:00")
-        self.today_time.setStyleSheet("font-size: 24px; font-weight: 900; color: #FFD16A;")
+        self.today_time.setStyleSheet(
+            f"font-size: 24px; font-weight: 900; color: {COLORS['cream']};"
+        )
         self.today_sessions = QLabel("0 completed sessions")
         self.today_sessions.setObjectName("Muted")
         today_layout.addWidget(today_title, 0, 0, 1, 2)
@@ -196,7 +201,9 @@ class HomePage(QWidget):
         self.active_mission = QLabel("")
         self.active_mission.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.active_mission.setWordWrap(True)
-        self.active_mission.setStyleSheet("font-size: 24px; font-weight: 800; color: #FFE2A8;")
+        self.active_mission.setStyleSheet(
+            f"font-size: 24px; font-weight: 800; color: {COLORS['cream']};"
+        )
 
         self.visual = MediaVisual(store)
         self.visual.setMinimumHeight(240)

@@ -1,5 +1,14 @@
 # Changes
 
+## 5.2.0
+
+- Apply the blue, slate, bronze, cream and yellow palette consistently to controls,
+  headings, charts, previews and companion text.
+- Access Session History and Statistics only from the sidebar; remove duplicate tabs.
+- Separate the table and notes with a wider resizable gap and a padded reading card.
+- Consolidate filters, add tag autocomplete, and give the session list more space.
+- Keep centered table cells, full multiline notes, and existing record formats.
+
 ## 5.1.0
 
 - Direct Session History and Statistics sidebar destinations; visible app version

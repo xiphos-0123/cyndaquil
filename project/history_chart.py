@@ -8,6 +8,8 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
+from .theme import COLORS
+
 
 class DailyProgressChart(QWidget):
     """Focused-hours bars with a rolling seven-day trend line."""
@@ -39,7 +41,7 @@ class DailyProgressChart(QWidget):
         if rect.width() <= 10 or rect.height() <= 10:
             return
 
-        painter.setPen(QColor("#60788A"))
+        painter.setPen(QColor(COLORS["muted"]))
         if not self.values:
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "No session data yet")
             return
@@ -54,10 +56,10 @@ class DailyProgressChart(QWidget):
 
         for i in range(5):
             y = rect.bottom() - rect.height() * i / 4
-            painter.setPen(QPen(QColor("#274052"), 1))
+            painter.setPen(QPen(QColor(COLORS["border"]), 1))
             painter.drawLine(rect.left(), int(y), rect.right(), int(y))
             hours = max_hours * i / 4
-            painter.setPen(QColor("#8EA4B3"))
+            painter.setPen(QColor(COLORS["muted"]))
             painter.drawText(2, int(y) - 8, 42, 16, Qt.AlignmentFlag.AlignRight, f"{hours:g}h")
 
         count = len(self.values)
@@ -70,12 +72,12 @@ class DailyProgressChart(QWidget):
             x = rect.left() + slot * index + (slot - bar_width) / 2
             y = rect.bottom() - height
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor("#E66C35") if seconds else QColor("#294A60"))
+            painter.setBrush(QColor(COLORS["bronze"]) if seconds else QColor(COLORS["blue"]))
             painter.drawRoundedRect(QRectF(x, y, bar_width, max(2, height)), 3, 3)
 
             label_every = 1 if count <= 14 else 3 if count <= 35 else 7
             if index % label_every == 0 or index == count - 1:
-                painter.setPen(QColor("#8EA4B3"))
+                painter.setPen(QColor(COLORS["muted"]))
                 painter.drawText(
                     int(x - slot * 0.25),
                     rect.bottom() + 7,
@@ -88,13 +90,13 @@ class DailyProgressChart(QWidget):
         # Selected-window average.
         if self.average > 0:
             avg_y = rect.bottom() - rect.height() * (self.average / max_seconds)
-            painter.setPen(QPen(QColor("#FFD16A"), 1, Qt.PenStyle.DashLine))
+            painter.setPen(QPen(QColor(COLORS["gold"]), 1, Qt.PenStyle.DashLine))
             painter.drawLine(rect.left(), int(avg_y), rect.right(), int(avg_y))
 
         # Rolling 7-day average. For the first six points, this uses all
         # available days so the progression starts immediately.
         if self.rolling:
-            painter.setPen(QPen(QColor("#F7E9C8"), 2))
+            painter.setPen(QPen(QColor(COLORS["cream"]), 2))
             previous = None
             for index, seconds in enumerate(self.rolling):
                 x = rect.left() + slot * index + slot / 2
@@ -104,11 +106,11 @@ class DailyProgressChart(QWidget):
                     painter.drawLine(previous[0], previous[1], point[0], point[1])
                 previous = point
 
-        painter.setPen(QColor("#FFD16A"))
+        painter.setPen(QColor(COLORS["gold"]))
         painter.drawText(
             rect.right() - 150, rect.top(), 150, 18, Qt.AlignmentFlag.AlignRight, "— window average"
         )
-        painter.setPen(QColor("#F7E9C8"))
+        painter.setPen(QColor(COLORS["cream"]))
         painter.drawText(
             rect.right() - 150,
             rect.top() + 18,

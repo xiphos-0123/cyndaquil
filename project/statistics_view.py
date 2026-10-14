@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 from .history_analytics import best_window, daily_totals, trend, window_days, window_total
 from .history_chart import DailyProgressChart
 from .history_records import _session_span_seconds
+from .theme import COLORS
 from .utils import current_reporting_day, format_seconds, reporting_day_bounds
 
 
@@ -30,15 +31,11 @@ class StatisticsView(QWidget):
         stats_layout = QVBoxLayout(self)
         header = QHBoxLayout()
         title_box = QVBoxLayout()
-        title = QLabel("Statistics")
-        title.setObjectName("SectionTitle")
         subtitle = QLabel(
-            "Time-based productivity analysis using a configurable reporting-day boundary. "
-            "Changing the boundary only changes grouping; it never rewrites the original session timestamps."
+            "Set the reporting-day boundary and chart range. Your original timestamps are preserved."
         )
         subtitle.setWordWrap(True)
         subtitle.setObjectName("Muted")
-        title_box.addWidget(title)
         title_box.addWidget(subtitle)
         header.addLayout(title_box, 1)
 
@@ -147,7 +144,7 @@ class StatisticsView(QWidget):
         cap = QLabel(label)
         cap.setObjectName("Muted")
         value = QLabel("00:00:00")
-        value.setStyleSheet("font-size: 20px; font-weight: 800; color: #FFD16A;")
+        value.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {COLORS['cream']};")
         detail = QLabel("")
         detail.setObjectName("Muted")
         detail.setWordWrap(True)
@@ -256,7 +253,7 @@ class StatisticsView(QWidget):
         self.chart.set_data(chart_values)
         self.chart_subtitle.setText(
             f"{chart_days}-day view · Reporting boundary {start_hour:02d}:00 · "
-            "orange bars = focused time · cream line = rolling 7-day daily average · yellow dashed line = selected-window average"
+            "bronze bars = focused time · cream line = rolling 7-day daily average · yellow dashed line = selected-window average"
         )
 
         # Session-duration analysis.

@@ -281,7 +281,7 @@ Windows tray integration, and audible playback require a desktop test.
 
 HISTORY FILTERS AND TAGS
 -----------------------
-History now has separate Session History and Statistics tabs. Session History
+Session History and Statistics are available from the sidebar only. Session History
 opens with all records and supports Today, Last 7/30/90 Days, or inclusive
 custom dates. Dates use the existing Reporting Day Start setting. Undated
 legacy records remain available in All time. Reset filters restores all records.
@@ -303,7 +303,7 @@ expanded without changing its saved contents.
 
 UPDATING AND IDENTIFYING THE RUNNING APP
 --------------------------------------
-Version 5.1.0 appears at the bottom of the sidebar. Session History and Statistics
+Version 5.2.0 appears at the bottom of the sidebar. Session History and Statistics
 are separate sidebar destinations. About Cyndaquil shows both the running version
 and the application/data folders so you can confirm which copy is running.
 
@@ -316,3 +316,11 @@ folder in a Windows terminal, run:
 Generated Python caches are no longer committed. User media and new runtime files
 are ignored by Git; previously tracked .cyndaquil records and backups are retained.
 Developer architecture and check commands are in docs/DEVELOPMENT.md.
+
+APPEARANCE
+----------
+The interface uses blue (#3a637b), slate (#63849d), bronze (#c4a46b),
+cream (#ffefa5), and yellow (#ffde00), with darker blue surfaces for readable text.
+History filters share one compact row. Tag suggestions appear while typing.
+Completion notes use a separate padded card with a resizable gap below the table.
+The media library, generated ambience, and custom branding are preserved.

@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from PySide6.QtCore import QDate, QItemSelectionModel, Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QTabWidget
 
 from project.history import HistoryPage
 from project.persistence import PersistenceError
@@ -47,10 +47,14 @@ class HistoryTests(unittest.TestCase):
         self.page = HistoryPage(self.store)
         self.addCleanup(self.page.hide)
 
-    def test_tabs_and_recent_and_custom_dates_do_not_change_records(self):
+    def test_views_and_recent_and_custom_dates_do_not_change_records(self):
         before = self.store.sessions_path.read_bytes()
-        self.assertEqual(self.page.tabs.tabText(0), "Session History")
-        self.assertEqual(self.page.tabs.tabText(1), "Statistics")
+        self.assertEqual(self.page.views.count(), 2)
+        self.assertEqual(self.page.findChildren(QTabWidget), [])
+        self.page.show_view(1)
+        self.assertEqual(self.page.title.text(), "Statistics")
+        self.page.show_view(0)
+        self.assertEqual(self.page.title.text(), "Session History")
         self.assertEqual(self.page.table.rowCount(), 4)
         self.page.period.setCurrentIndex(self.page.period.findData(7))
         self.assertEqual(self.page.table.rowCount(), 2)
@@ -63,7 +67,7 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(self.page.table.rowCount(), 1)
         self.page.from_date.setDate(qday.addDays(1))
         self.assertEqual(self.page.table.rowCount(), 0)
-        self.assertIn("Choose", self.page.result_count.text())
+        self.assertIn("Invalid", self.page.result_count.text())
         self.page._reset_filters()
         self.assertEqual(self.page.table.rowCount(), 4)
         self.assertEqual(self.store.sessions_path.read_bytes(), before)
@@ -85,7 +89,7 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(self.page.table.columnCount(), 9)
         self.page.table.selectRow(0)
         self.assertEqual(self.page.table.item(0, 0).textAlignment(), Qt.AlignmentFlag.AlignCenter)
-        self.assertIn("Example 3", self.page.note_title.text())
+        self.assertIn("Example 3", self.page.note_context.text())
         self.assertEqual(
             self.page.note_detail.toPlainText(), self.store.sessions[3]["completion_note"]
         )
@@ -171,3 +175,12 @@ class HistoryTests(unittest.TestCase):
         self.assertFalse(self.page.delete.isEnabled())
         self.page.refresh()
         self.assertEqual(len(self.page.selected_ids()), 2)
+
+    def test_tag_completion_preserves_preceding_tags(self):
+        editor = self.page.tag_filter
+        self.store.update_session_tags(["0"], ["Reading", "Study"])
+        editor.text.setText("Earlier, Stu")
+        editor.completer.setCompletionPrefix("Stu")
+        index = editor.completer.completionModel().index(0, 0)
+        self.assertEqual(editor.completer.pathFromIndex(index), "Earlier, Study")
+        self.assertEqual(editor.completer.splitPath("Earlier, Stu"), ["Stu"])

@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
 
         for _, page in self.pages:
             self.stack.addWidget(page)
-        self.history.tabs.currentChanged.connect(self._history_tab_changed)
+        self.history.views.currentChanged.connect(self._history_view_changed)
 
         shell.addWidget(self.sidebar)
         shell.addWidget(self.stack, 1)
@@ -161,15 +161,15 @@ class MainWindow(QMainWindow):
             self.companion.apply_settings(resize_windows=True)
             self.companion.refresh()
 
-    def navigate(self, index: int, history_tab: int | None = None) -> None:
-        if index == 2 and history_tab is not None:
-            self.history.tabs.setCurrentIndex(history_tab)
+    def navigate(self, index: int, history_view: int | None = None) -> None:
+        if index == 2 and history_view is not None:
+            self.history.show_view(history_view)
         self.stack.setCurrentIndex(index)
-        self.sidebar.set_current(index, self.history.tabs.currentIndex())
+        self.sidebar.set_current(index, self.history.views.currentIndex())
 
-    def _history_tab_changed(self, tab: int) -> None:
+    def _history_view_changed(self, index: int) -> None:
         if self.stack.currentIndex() == 2:
-            self.sidebar.set_current(2, tab)
+            self.sidebar.set_current(2, index)
 
     def show_about(self) -> None:
         folder = Path(__file__).resolve().parent.parent
