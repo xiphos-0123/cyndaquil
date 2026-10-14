@@ -180,11 +180,8 @@ class BulkSessionEntryDialog(QDialog):
         self.text_fields["completion_note"] = self.notes
         self.initial["completion_note"] = self.notes.toPlainText()
         self.note_highlighter = MixedMarkerHighlighter(self.notes.document(), self.note_mixed)
-        self.notes.textChanged.connect(
-            lambda: note_check.setChecked(
-                self.notes.toPlainText() != self.initial["completion_note"]
-            )
-        )
+        self._last_note_text = self.initial["completion_note"]
+        self.notes.textChanged.connect(self._notes_changed)
         notes_layout.addWidget(self.notes, 1)
         differences = QPushButton("View differing sections…")
         differences.setEnabled(any(mixed.sections for mixed in self.mixed.values()))
@@ -202,6 +199,13 @@ class BulkSessionEntryDialog(QDialog):
         buttons.accepted.connect(self.save)
         buttons.rejected.connect(self.reject)
         root.addWidget(buttons)
+
+    def _notes_changed(self):
+        text = self.notes.toPlainText()
+        if text == self._last_note_text:
+            return  # Syntax highlighting can emit textChanged without editing text.
+        self._last_note_text = text
+        self.apply_fields["completion_note"].setChecked(text != self.initial["completion_note"])
 
     def _apply_checkbox(self, key, label):
         box = QCheckBox(label)

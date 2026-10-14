@@ -158,3 +158,13 @@ class BulkEditTests(unittest.TestCase):
             warning.assert_called_once()
         self.assertEqual(self.store.sessions, self.original)
         self.assertEqual(self.dialog.result(), 0)
+
+    def test_rehighlighting_keeps_explicitly_unchecked_notes_unchecked(self):
+        self.dialog.notes.setPlainText(
+            self.dialog.notes.toPlainText().replace("Work completed", "Work reviewed")
+        )
+        self.dialog.apply_fields["completion_note"].setChecked(False)
+        self.dialog.note_highlighter.rehighlight()
+        self.app.processEvents()
+        self.assertFalse(self.dialog.apply_fields["completion_note"].isChecked())
+        self.assertEqual(self.dialog.build_updates(), {})
